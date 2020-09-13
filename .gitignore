@@ -1,0 +1,79 @@
+# Gradle
+**/build/
+**/.gradle/
+gradlew.bat
+
+# IntelliJ IDEA
+.idea
+*.iws
+*.iml
+*.ipr
+**/out
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Eclipse
+*.classpath
+*.project
+*.settings
+**/bin/
+atlassian-ide-plugin.xml
+.metadata
+.recommenders
+**/.springBeans
+
+# Vim
+*.sw[op]
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Textmate
+.textmate
+
+# Sublime Text
+*.sublime-*
+
+# jEnv
+.java-version
+
+# OS X
+.DS_Store
+
+# HPROF
+*.hprof
+
+
+**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+.flattened-pom.xml
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
+!/.mvn/wrapper/maven-wrapper.jar
+
+# do not version compiled properties configuration files
+assets/conf.new/**/*.properties
+assets/compiled
+
+# Ignore output folder created by JMeter Taurus tool command
+assets/tests/saga/jmetertaurusartifacts
+
+configuration/**
+!configuration/README.md
+
+.vscode
