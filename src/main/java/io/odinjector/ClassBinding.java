@@ -9,7 +9,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ClassBinding<T> implements Binding<T> {
 	Class<?> toClass;
@@ -45,14 +44,28 @@ public class ClassBinding<T> implements Binding<T> {
 			}
 		}
 
-		Provider<T> provider = () -> {
+		return new ClassBindingProvider(constructor, args, toClass);
+	}
+
+	private static class ClassBindingProvider<C> implements Provider<C> {
+		private Constructor<?> constructor;
+		private Object[] args;
+		private Class<C> toClass;
+
+		private ClassBindingProvider(Constructor<?> constructor, Object[] args, Class<C> toClass) {
+			this.constructor = constructor;
+			this.args = args;
+			this.toClass = toClass;
+		}
+
+		@Override
+		public C get() {
 			try {
-				return (T)constructor.newInstance(args);
+				return (C)constructor.newInstance(args);
 			} catch (Exception e) {
 				throw new InjectionException("Unable to construct "+toClass.getName(),e);
 			}
-		};
-		return provider;
+		}
 	}
 
 	@Override
