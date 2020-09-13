@@ -1,6 +1,7 @@
 package io.odinjector;
 
 import io.odinjector.testclasses.AltHierarchyImpl;
+import io.odinjector.testclasses.ClassWithMultipleContexts;
 import io.odinjector.testclasses.ClassWithNonRecursiveHierarchialContext;
 import io.odinjector.testclasses.ClassWithInterfaceInjection;
 import io.odinjector.testclasses.ClassWithListInjection;
@@ -14,6 +15,7 @@ import io.odinjector.testclasses.SingletonCtx;
 import io.odinjector.testclasses.SingletonImpl;
 import io.odinjector.testclasses.TestImpl1;
 import io.odinjector.testclasses.TestImpl2;
+import io.odinjector.testclasses.TestImpl3;
 import io.odinjector.testclasses.TestInterface1;
 import org.junit.Before;
 import org.junit.Test;
@@ -141,5 +143,13 @@ public class OdinJectorTest {
 
 		assertSame(AltHierarchyImpl.class, actual.getHierarchy().getClass());
 		assertSame(TestImpl1.class, actual.getHierarchy().getTestInterface().getClass());
+	}
+
+	@Test
+	public void getDependency_withMultipleContextualClasses() {
+		ClassWithMultipleContexts actual = odinJector.getInstance(ClassWithMultipleContexts.class);
+
+		assertSame(AltHierarchyImpl.class, actual.getHierarchy().getClass());
+		assertSame(TestImpl3.class, actual.getTestInterface1().getClass());
 	}
 }

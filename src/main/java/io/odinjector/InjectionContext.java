@@ -2,6 +2,7 @@ package io.odinjector;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
@@ -40,7 +41,7 @@ public class InjectionContext<T> {
 		return ic;
 	}
 
-	public void addNext(List<Context> contexts, boolean recursive) {
+	public void addNext(Collection<? extends Context> contexts, boolean recursive) {
 		List<Context> nextContext = new ArrayList<>(this.context);
 		nextContext.addAll(contexts);
 		if (recursive) {
@@ -50,7 +51,7 @@ public class InjectionContext<T> {
 		}
 	}
 
-	public void addToNext(List<Context> contexts, boolean recursive) {
+	public void addToNext(Collection<? extends Context> contexts, boolean recursive) {
 		if (recursive) {
 			recursiveContext.addAll(contexts);
 		} else {
@@ -58,7 +59,7 @@ public class InjectionContext<T> {
 				nextContexts.getFirst().addAll(contexts);
 			} else {
 				nextContexts = new ArrayDeque<>();
-				nextContexts.add(contexts);
+				nextContexts.add(new ArrayList<>(contexts));
 			}
 		}
 	}

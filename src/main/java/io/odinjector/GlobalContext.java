@@ -21,7 +21,9 @@ public class GlobalContext extends Context {
 	@Override
 	<T> List<BindingResult<T>> getBindings(InjectionContext<T> injectionContext) {
 		if (injectionContext.context != null) {
-			for (Context context : injectionContext.context) {
+			List<Context> list = new ArrayList<>(injectionContext.context);
+			Collections.reverse(list);
+			for (Context context : list) {
 				List<BindingResult<T>> bindings = context.getBindings(injectionContext);
 				if (!bindings.isEmpty()) {
 					return bindings;

@@ -7,6 +7,8 @@ package io.odinjector;
 
 import javax.inject.Provider;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +43,10 @@ public class OdinJector {
 		return this;
 	}
 
+	private void addDynamicContexts(List<Class<? extends Context>> contexts) {
+		contexts.forEach(this::addDynamicContext);
+	}
+
 	private void addDynamicContext(Class<? extends Context> context) {
 		dynamicContexts.computeIfAbsent(context, c -> {
 			try {
@@ -64,7 +70,6 @@ public class OdinJector {
 
 			BindingResult<T> binding = getBoundClass(globalContext, injectionContext);
 			setupForBinding(injectionContext, binding);
-			System.out.println(injectionContext.logOutput());
 
 			Provider<T> provider = binding.binding.getProvider(globalContext, injectionContext, this);
 
@@ -95,28 +100,29 @@ public class OdinJector {
 	private <T> void setupForBinding(InjectionContext<T> injectionContext, BindingResult<T> binding) {
 		if (binding.binding.getElementClass().isAnnotationPresent(ContextualInject.class)) {
 			ContextualInject annotation = binding.binding.getElementClass().getAnnotation(ContextualInject.class);
-			addDynamicContext(annotation.value());
-			injectionContext.context.add(0, dynamicContexts.get(annotation.value()));
-			injectionContext.addToNext(Collections.singletonList(dynamicContexts.get(annotation.value())), annotation.recursive());
+			List<Class<? extends Context>> annotationContextClasses = Arrays.asList(annotation.value());
+			addDynamicContexts(annotationContextClasses);
+			Collection<? extends Context> annotationContexts = getDynamicContexts(annotationContextClasses);
+			injectionContext.context.addAll(0, annotationContexts);
+			injectionContext.addToNext(annotationContexts, annotation.recursive());
 		}
+	}
+
+	private Collection<? extends Context> getDynamicContexts(List<Class<? extends Context>> annotationContexts) {
+		return annotationContexts.stream().map(dynamicContexts::get).collect(Collectors.toList());
 	}
 
 	private <T> void setup(InjectionContext<T> injectionContext) {
 		Class<T> clazz = injectionContext.clazz;
 
 		if (clazz.isAnnotationPresent(ContextualInject.class)) {
-			Class<? extends Context> contextClass = clazz.getAnnotation(ContextualInject.class).value();
-			addDynamicContext(contextClass);
+			List<Class<? extends Context>> contextClasses = Arrays.asList(clazz.getAnnotation(ContextualInject.class).value());
+			addDynamicContexts(contextClasses);
 
-			System.out.println("mu: "+injectionContext.logOutput());
-//				ArrayList<Context> current = new ArrayList<>(injectionContext.context);
-			injectionContext.context.add(0, dynamicContexts.get(contextClass));
+			injectionContext.context.addAll(0, getDynamicContexts(contextClasses));
 
-//				System.out.println("Non recursive: "+current.size());
-			injectionContext.addNext(Collections.singletonList(dynamicContexts.get(contextClass)), clazz.getAnnotation(ContextualInject.class).recursive());
-			System.out.println("nr: "+injectionContext.logOutput());
+			injectionContext.addNext(getDynamicContexts(contextClasses), clazz.getAnnotation(ContextualInject.class).recursive());
 		}
-		System.out.println(injectionContext.logOutput());
 	}
 
 
