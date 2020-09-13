@@ -50,11 +50,32 @@ public class InjectionContext<T> {
 		}
 	}
 
+	public void addToNext(List<Context> contexts, boolean recursive) {
+		if (recursive) {
+			recursiveContext.addAll(contexts);
+		} else {
+			if (nextContexts != null && !nextContexts.isEmpty()) {
+				nextContexts.getFirst().addAll(contexts);
+			} else {
+				nextContexts = new ArrayDeque<>();
+				nextContexts.add(contexts);
+			}
+		}
+	}
 
 	public String logOutput() {
 		return "class: "+clazz.getName()
 				+" Context: "+(this.context != null ? this.context.stream().map(c -> c.getClass().getName()).collect(Collectors.joining(", ")):"")
 				+" next: "+(this.nextContexts != null ? this.nextContexts.stream().map(l -> l.stream().map(cl -> cl.getClass().getName()).collect(Collectors.joining(","))).collect(Collectors.joining(" | ")):"");
+	}
+
+	public InjectionContext<T> copy() {
+		InjectionContext<T> injectionContext = new InjectionContext<>();
+		injectionContext.nextContexts = new ArrayDeque<>(this.nextContexts);
+		injectionContext.recursiveContext = new ArrayList<>(this.recursiveContext);
+		injectionContext.context = new ArrayList<>(this.context);
+		injectionContext.clazz = this.clazz;
+		return injectionContext;
 	}
 
 	public static class CurrentContext<T> {

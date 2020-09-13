@@ -5,7 +5,7 @@ import io.odinjector.ContextualInject;
 import javax.inject.Inject;
 
 @ContextualInject(value = MyAltCtx.class, recursive = false)
-public class ClassWithNonRecursiveHierarchialContext {
+public class ClassWithNonRecursiveHierarchialContext implements InterfaceForClassWithNonRecursiveHierarchialContext {
 	private Hierarchy hierarchy;
 
 	@Inject

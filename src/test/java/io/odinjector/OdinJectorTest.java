@@ -7,6 +7,7 @@ import io.odinjector.testclasses.ClassWithListInjection;
 import io.odinjector.testclasses.ClassWithProviderInjection;
 import io.odinjector.testclasses.ClassWithRecursiveHierarchialContext;
 import io.odinjector.testclasses.ContextualDependencies;
+import io.odinjector.testclasses.InterfaceForClassWithNonRecursiveHierarchialContext;
 import io.odinjector.testclasses.MyAltCtx;
 import io.odinjector.testclasses.MyCtx;
 import io.odinjector.testclasses.SingletonCtx;
@@ -132,5 +133,13 @@ public class OdinJectorTest {
 
 		assertSame(AltHierarchyImpl.class, actual.getHierarchy().getClass());
 		assertSame(TestImpl2.class, actual.getHierarchy().getTestInterface().getClass());
+	}
+
+	@Test
+	public void getDependency_fromNonRecurisveContextualInject_setOnResolvedClass() {
+		InterfaceForClassWithNonRecursiveHierarchialContext actual = odinJector.getInstance(InterfaceForClassWithNonRecursiveHierarchialContext.class);
+
+		assertSame(AltHierarchyImpl.class, actual.getHierarchy().getClass());
+		assertSame(TestImpl1.class, actual.getHierarchy().getTestInterface().getClass());
 	}
 }
