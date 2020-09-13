@@ -6,9 +6,7 @@
 package io.odinjector;
 
 import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,7 +17,7 @@ import java.util.stream.Collectors;
 public class OdinJector {
 	private final Map<Class<? extends Context>, Context> contexts = Collections.synchronizedMap(new LinkedHashMap<>());
 	private final Map<Class<? extends Context>, Context> dynamicContexts = new ConcurrentHashMap<>();
-	private final Map<InjectionContext, Provider> providers = new ConcurrentHashMap<>();
+	private final Map<InjectionContext.CurrentContext, Provider> providers = new ConcurrentHashMap<>();
 	private final GlobalContext globalContext;
 
 	private OdinJector() {
@@ -61,12 +59,13 @@ public class OdinJector {
 
 	@SuppressWarnings("unchecked")
 	<T> T getInstance(InjectionContext<T> injectionContext) {
-		return (T)providers.computeIfAbsent(injectionContext, c -> {
-			InjectionSetup<T> setup = setup(injectionContext);
+		return (T)providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> {
+			InjectionContext<T> thisInjectionContext = setup(injectionContext);
+			System.out.println(thisInjectionContext.logOutput());
 
-			BindingResult<T> binding = getBoundClass(globalContext, setup.thisInjectionContext);
+			BindingResult<T> binding = getBoundClass(globalContext, thisInjectionContext);
 
-			Provider<T> provider = binding.binding.getProvider(globalContext, setup.thisInjectionContext, injectionContext, this);
+			Provider<T> provider = binding.binding.getProvider(globalContext, thisInjectionContext, this);
 
 			if (binding.binding.isSingleton()) {
 				return () -> binding.context.singleton(injectionContext.clazz, provider);
@@ -78,33 +77,32 @@ public class OdinJector {
 
 	@SuppressWarnings("unchecked")
 	public <T> List<T> getInstances(InjectionContext<T> injectionContext) {
-		return (List<T>)providers.computeIfAbsent(injectionContext, c -> {
-			InjectionSetup<T> setup = setup(injectionContext);
+		return (List<T>)providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> {
+			InjectionContext<T> thisInjectionContext = setup(injectionContext);
 
-			List<BindingResult<T>> bindings = getBoundClasses(globalContext, setup.thisInjectionContext);
+			List<BindingResult<T>> bindings = getBoundClasses(globalContext, thisInjectionContext);
 
-			return () -> bindings.stream().map(binding -> binding.binding.getProvider(globalContext, setup.thisInjectionContext, injectionContext, this).get()).collect(Collectors.toList());
+			return () -> bindings.stream().map(binding -> binding.binding.getProvider(globalContext, thisInjectionContext, this).get()).collect(Collectors.toList());
 		}).get();
 	}
 
-	private <T> InjectionSetup<T> setup(InjectionContext<T> injectionContext) {
+	private <T> InjectionContext<T> setup(InjectionContext<T> injectionContext) {
 		Class<T> clazz = injectionContext.clazz;
-		Class<? extends Context> contextClass = clazz.isAnnotationPresent(ContextualInject.class)
-				? clazz.getAnnotation(ContextualInject.class).value()
-				: GlobalContext.class;
 
-		InjectionContext<T> thisInjectionContext = injectionContext.copy();
-
-		if (contextClass != GlobalContext.class) {
+		if (clazz.isAnnotationPresent(ContextualInject.class)) {
+			Class<? extends Context> contextClass = clazz.getAnnotation(ContextualInject.class).value();
 			addDynamicContext(contextClass);
 
-			thisInjectionContext.context.add(0, dynamicContexts.get(contextClass));
-			if (clazz.isAnnotationPresent(ContextualInject.class) && clazz.getAnnotation(ContextualInject.class).recursive()) {
-				injectionContext.context.add(0, dynamicContexts.get(contextClass));
-			}
+			System.out.println("mu: "+injectionContext.logOutput());
+			ArrayList<Context> current = new ArrayList<>(injectionContext.context);
+			injectionContext.context.add(0, dynamicContexts.get(contextClass));
+
+			System.out.println("Non recursive: "+current.size());
+			injectionContext.addNext(current, clazz.getAnnotation(ContextualInject.class).recursive());
+			System.out.println("nr: "+injectionContext.logOutput());
 		}
 
-		return new InjectionSetup<>(injectionContext, thisInjectionContext);
+		return injectionContext;
 	}
 
 
@@ -114,16 +112,5 @@ public class OdinJector {
 
 	private <T> List<BindingResult<T>> getBoundClasses(Context context, InjectionContext<T> thisInjectionContext) {
 		return context.getBindings(thisInjectionContext);
-	}
-
-
-	private static class InjectionSetup<T> {
-		final InjectionContext<T> injectionContext;
-		final InjectionContext<T> thisInjectionContext;
-
-		public InjectionSetup(InjectionContext<T> injectionContext, InjectionContext<T> thisInjectionContext) {
-			this.injectionContext = injectionContext;
-			this.thisInjectionContext = thisInjectionContext;
-		}
 	}
 }

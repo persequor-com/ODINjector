@@ -20,10 +20,12 @@ public class GlobalContext extends Context {
 
 	@Override
 	<T> List<BindingResult<T>> getBindings(InjectionContext<T> injectionContext) {
-		for(Context context : injectionContext.context) {
-			List<BindingResult<T>> bindings = context.getBindings(injectionContext);
-			if (!bindings.isEmpty()) {
-				return bindings;
+		if (injectionContext.context != null) {
+			for (Context context : injectionContext.context) {
+				List<BindingResult<T>> bindings = context.getBindings(injectionContext);
+				if (!bindings.isEmpty()) {
+					return bindings;
+				}
 			}
 		}
 		List<Context> list = new ArrayList<>(registeredContexts.values());

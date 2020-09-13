@@ -21,7 +21,7 @@ public class ClassBinding<T> implements Binding<T> {
 		return new ClassBinding<>(toClass);
 	}
 
-	public Provider<T> getProvider(Context context, InjectionContext<T> thisInjectionContext, InjectionContext<T> outsideInjectionContext, OdinJector injector) {
+	public Provider<T> getProvider(Context context, InjectionContext<T> thisInjectionContext, OdinJector injector) {
 		Constructor<?> constructor = Arrays.stream(toClass.getConstructors()).filter(const1 -> const1.isAnnotationPresent(Inject.class)).findFirst()
 				.orElseGet(() -> Arrays.stream(toClass.getConstructors()).filter(c2 -> c2.getParameterTypes().length == 0).findFirst()
 						.orElseThrow(() -> new InjectionException("Unable to find constructor which has the @Inject annotation or is parameterless on: "+toClass.getName())));
@@ -33,14 +33,14 @@ public class ClassBinding<T> implements Binding<T> {
 			if (parameterType == List.class) {
 				AnnotatedType annotatedType = constructor.getParameters()[i].getAnnotatedType();
 				Class<?> listElementType = getClassFromType(annotatedType.getType());
-				args[i++] = injector.getInstances(outsideInjectionContext.contextFor(listElementType));
+				args[i++] = injector.getInstances(thisInjectionContext.nextContextFor(listElementType));
 //				args[i++] = context.getBindings(thisInjectionContext.context, listElementType).stream().map().collect(Collectors.toList());
 			} else if (parameterType == Provider.class) {
 				AnnotatedType annotatedType = constructor.getParameters()[i].getAnnotatedType();
 				Class<?> providerElementType = getClassFromType(annotatedType.getType());
-				args[i++] = (Provider)() -> injector.getInstance(thisInjectionContext.contextFor(providerElementType));
+				args[i++] = (Provider)() -> injector.getInstance(thisInjectionContext.nextContextFor(providerElementType));
 			} else {
-				args[i++] = injector.getInstance(thisInjectionContext.contextFor(parameterType));
+				args[i++] = injector.getInstance(thisInjectionContext.nextContextFor(parameterType));
 			}
 		}
 

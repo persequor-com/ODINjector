@@ -13,7 +13,7 @@ public class ProviderBinding<T> implements Binding<T> {
 	}
 
 	@Override
-	public Provider<T> getProvider(Context context, InjectionContext<T> thisInjectionContext, InjectionContext<T> outsideInjectionContext, OdinJector injector) {
+	public Provider<T> getProvider(Context context, InjectionContext<T> thisInjectionContext, OdinJector injector) {
 		return provider;
 	}
 
