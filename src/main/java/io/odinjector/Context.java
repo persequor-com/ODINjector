@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public abstract class Context {
 	Map<Class<?>, List<Binding<?>>> contextBindings = new ConcurrentHashMap<>();
@@ -19,18 +20,19 @@ public abstract class Context {
 	}
 
 	@SuppressWarnings("unchecked")
-	<T> List<Binding<T>> getBindings(List<Class<? extends Context>> contexts, Class<T> type) {
-		if (!contexts.contains(getClass())) {
-			return Collections.emptyList();
-		}
-		List res = (List) (contextBindings.containsKey(type)
-				? contextBindings.get(type)
-				: Collections.singletonList(ClassBinding.of(type)));
+	<T> List<BindingResult<T>> getBindings(InjectionContext<T> injectionContext) {
+		List res = (List) (contextBindings.containsKey(injectionContext.clazz)
+				? contextBindings.get(injectionContext.clazz).stream().map(b -> BindingResult.of(b, this)).collect(Collectors.toList())
+				: Collections.emptyList());
 		return res;
 	}
 
-	public <T> Binding<T> getBinding(List<Class<? extends Context>> contexts, Class<T> parameterType) {
-		return getBindings(contexts, parameterType).get(0);
+	public <T> BindingResult<T> getBinding(InjectionContext<T> injectionContext) {
+		List<BindingResult<T>> bindings = getBindings(injectionContext);
+		if (bindings.isEmpty()) {
+			return BindingResult.empty();
+		}
+		return bindings.get(0);
 	}
 
 	@SuppressWarnings("unchecked")

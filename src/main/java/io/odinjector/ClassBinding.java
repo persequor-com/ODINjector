@@ -39,9 +39,9 @@ public class ClassBinding<T> implements Binding<T> {
 			} else if (parameterType == Provider.class) {
 				AnnotatedType annotatedType = constructor.getParameters()[i].getAnnotatedType();
 				Class<?> providerElementType = getClassFromType(annotatedType.getType());
-				args[i++] = (Provider)() -> injector.getInstance(outsideInjectionContext.contextFor(providerElementType));
+				args[i++] = (Provider)() -> injector.getInstance(thisInjectionContext.contextFor(providerElementType));
 			} else {
-				args[i++] = injector.getInstance(outsideInjectionContext.contextFor(parameterType));
+				args[i++] = injector.getInstance(thisInjectionContext.contextFor(parameterType));
 			}
 		}
 

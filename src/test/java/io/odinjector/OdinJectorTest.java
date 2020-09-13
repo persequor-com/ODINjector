@@ -3,6 +3,7 @@ package io.odinjector;
 import io.odinjector.testclasses.ClassWithInterfaceInjection;
 import io.odinjector.testclasses.ClassWithListInjection;
 import io.odinjector.testclasses.ClassWithProviderInjection;
+import io.odinjector.testclasses.ContextualDependencies;
 import io.odinjector.testclasses.MyAltCtx;
 import io.odinjector.testclasses.MyCtx;
 import io.odinjector.testclasses.SingletonCtx;
@@ -105,5 +106,12 @@ public class OdinJectorTest {
 		TestInterface1 actual2 = odinJector.getInstance(ClassWithInterfaceInjection.class).get();
 
 		assertSame(actual1, actual2);
+	}
+
+	@Test
+	public void getDependency_fromContextualInject() {
+		ContextualDependencies actual1 = odinJector.getInstance(ContextualDependencies.class);
+
+		assertSame(TestImpl2.class, actual1.getDependency().getClass());
 	}
 }

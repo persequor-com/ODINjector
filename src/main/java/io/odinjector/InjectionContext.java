@@ -2,12 +2,15 @@ package io.odinjector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class InjectionContext<T> {
-	List<Class<? extends Context>> context;
+	List<Context> context;
 	Class<T> clazz;
 
-	static <C> InjectionContext<C> get(List<Class<? extends Context>> context, Class<C> clazz) {
+
+	static <C> InjectionContext<C> get(List<Context> context, Class<C> clazz) {
 		InjectionContext<C> ic = new  InjectionContext<>();
 		ic.context = context;
 		ic.clazz = clazz;

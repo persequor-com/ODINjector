@@ -1,6 +1,8 @@
 package io.odinjector;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -17,13 +19,21 @@ public class GlobalContext extends Context {
 	}
 
 	@Override
-	<T> List<Binding<T>> getBindings(List<Class<? extends Context>> contexts, Class<T> type) {
-		return contexts.stream()
-				.filter(registeredContexts::containsKey)
-				.map(registeredContexts::get)
-				.map(c -> c.getBindings(contexts, type))
-				.filter(l -> l.size() > 0)
-				.findFirst()
-				.orElseGet(() -> getBindings(new ArrayList<>(registeredContexts.keySet()), type));
+	<T> List<BindingResult<T>> getBindings(InjectionContext<T> injectionContext) {
+		for(Context context : injectionContext.context) {
+			List<BindingResult<T>> bindings = context.getBindings(injectionContext);
+			if (!bindings.isEmpty()) {
+				return bindings;
+			}
+		}
+		List<Context> list = new ArrayList<>(registeredContexts.values());
+		Collections.reverse(list);
+		for(Context context : list) {
+			List<BindingResult<T>> bindings = context.getBindings(injectionContext);
+			if (!bindings.isEmpty()) {
+				return bindings;
+			}
+		}
+		return Collections.singletonList(BindingResult.of(ClassBinding.of(injectionContext.clazz), this));
 	}
 }
