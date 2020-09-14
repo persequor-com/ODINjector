@@ -14,6 +14,7 @@ import io.odinjector.testclasses.InterfaceForClassWithNonRecursiveHierarchialCon
 import io.odinjector.testclasses.MyAltCtx;
 import io.odinjector.testclasses.MyAltCtxWithMarker;
 import io.odinjector.testclasses.MyCtx;
+import io.odinjector.testclasses.MyMultipleBindingsCtx;
 import io.odinjector.testclasses.MyOtherAltCtx;
 import io.odinjector.testclasses.SingletonCtx;
 import io.odinjector.testclasses.SingletonImpl;
@@ -67,6 +68,17 @@ public class OdinJectorTest {
 
 		assertEquals(1, actual.get().size());
 		assertSame(TestImpl1.class, actual.get().get(0).getClass());
+	}
+
+	@Test
+	public void getClassWithMultipleElementsInListDependency() {
+		odinJector.addContext(new MyMultipleBindingsCtx());
+		ClassWithListInjection actual = odinJector.getInstance(ClassWithListInjection.class);
+
+		assertEquals(3, actual.get().size());
+		assertSame(TestImpl1.class, actual.get().get(0).getClass());
+		assertSame(TestImpl2.class, actual.get().get(1).getClass());
+		assertSame(TestImpl3.class, actual.get().get(2).getClass());
 	}
 
 	@Test

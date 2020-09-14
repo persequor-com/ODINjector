@@ -1,6 +1,7 @@
 package io.odinjector;
 
 import javax.inject.Provider;
+import java.util.ArrayList;
 import java.util.Collections;
 
 public class ContextBinder implements Binder {
@@ -29,6 +30,11 @@ public class ContextBinder implements Binder {
 			public BindingTo<T> asSingleton() {
 				this.setAsSingleton = true;
 				return this;
+			}
+
+			@Override
+			public void add(Class<? extends T> toClass) {
+				context.contextBindings.computeIfAbsent(fromClass, f -> new ArrayList<>()).add(ClassBinding.of(toClass, setAsSingleton));
 			}
 		};
 	}
