@@ -11,6 +11,7 @@ import io.odinjector.testclasses.ContextualDependencies;
 import io.odinjector.testclasses.InterfaceForClassWithNonRecursiveHierarchialContext;
 import io.odinjector.testclasses.MyAltCtx;
 import io.odinjector.testclasses.MyCtx;
+import io.odinjector.testclasses.MyOtherAltCtx;
 import io.odinjector.testclasses.SingletonCtx;
 import io.odinjector.testclasses.SingletonImpl;
 import io.odinjector.testclasses.TestImpl1;
@@ -27,7 +28,7 @@ public class OdinJectorTest {
 
 	@Before
 	public void before() {
-		odinJector = OdinJector.create().addContext(MyCtx.class);
+		odinJector = OdinJector.create().addContext(new MyCtx()).addDynamicContext(new MyAltCtx()).addDynamicContext(new MyOtherAltCtx());
 	}
 
 	@Test
@@ -67,7 +68,7 @@ public class OdinJectorTest {
 
 	@Test
 	public void getFromAlternateContext() {
-		odinJector.addContext(MyAltCtx.class);
+		odinJector.addContext(new MyAltCtx());
 		TestInterface1 actual = odinJector.getInstance(TestInterface1.class);
 
 		assertSame(TestImpl2.class, actual.getClass());
@@ -75,7 +76,7 @@ public class OdinJectorTest {
 
 	@Test
 	public void getWithInjectionFromAlternateContext() {
-		odinJector.addContext(MyAltCtx.class);
+		odinJector.addContext(new MyAltCtx());
 		ClassWithInterfaceInjection actual = odinJector.getInstance(ClassWithInterfaceInjection.class);
 
 		assertSame(TestImpl2.class, actual.get().getClass());
@@ -107,7 +108,7 @@ public class OdinJectorTest {
 
 	@Test
 	public void getSingleton_fromDependency() {
-		odinJector.addContext(SingletonCtx.class);
+		odinJector.addContext(new SingletonCtx());
 		TestInterface1 actual1 = odinJector.getInstance(ClassWithInterfaceInjection.class).get();
 		TestInterface1 actual2 = odinJector.getInstance(ClassWithInterfaceInjection.class).get();
 
