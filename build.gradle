@@ -1,11 +1,51 @@
 plugins {
     id 'java'
+    id: 'maven-publish'
 }
 
 group 'io.odinjector'
 
+sourceCompatibility = '1.8'
+
+jar {
+    manifest {
+        attributes(
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version,
+                'Implementation-Vendor-Id': project.group,
+                'Implementation-Vendor': 'Persequor ApS',
+                'Created-By': "Gradle $project.gradle.gradleVersion"
+        )
+    }
+}
+
 repositories {
     mavenCentral()
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = psqr_private_maven_snapshot_local_repository_url
+        credentials {
+            username psqr_private_maven_repository_username
+            password psqr_private_maven_repository_password
+        }
+        mavenContent {
+            snapshotsOnly()
+        }
+    }
+
+    maven {
+        url = psqr_private_maven_releases_local_repository_url
+        credentials {
+            username psqr_private_maven_repository_username
+            password psqr_private_maven_repository_password
+        }
+        mavenContent {
+            releasesOnly()
+        }
+    }
 }
 
 publishing {
