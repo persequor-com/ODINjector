@@ -10,6 +10,10 @@ pipeline {
 		string (name: 'NEXT_DEVELOPMENT_VERSION_NUMBER', defaultValue: '', description: "Input next development version as MAJOR.MINOR.PATCH.")
 	}
 
+		environment {
+    		GRADLE_BUILD_DOCKER_IMAGE_VERSION = 'gradle:6.3-jdk8'
+    	}
+
 	stages {
 		stage("ensure versions") {
 			stages {
