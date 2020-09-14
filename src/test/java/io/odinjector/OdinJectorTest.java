@@ -143,6 +143,14 @@ public class OdinJectorTest {
 	}
 
 	@Test
+	public void getDependency_fromMarkerInject() {
+		odinJector.addContext(new MyAltCtxWithMarker());
+		ContextualDependencies actual1 = odinJector.getInstance(ContextualDependencies.class);
+
+		assertSame(TestImpl2.class, actual1.getDependency().getClass());
+	}
+
+	@Test
 	public void getDependency_fromNonRecurisveContextualInject() {
 		ClassWithNonRecursiveHierarchialContext actual = odinJector.getInstance(ClassWithNonRecursiveHierarchialContext.class);
 

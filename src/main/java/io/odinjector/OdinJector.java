@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("rawtypes")
 public class OdinJector {
-	private final Map<Class<? extends Context>, Context> contexts = Collections.synchronizedMap(new LinkedHashMap<>());
+	private final Map<Class<? extends ContextMarker>, Context> contexts = Collections.synchronizedMap(new LinkedHashMap<>());
 	private final Map<Class<? extends ContextMarker>, Context> dynamicContexts = Collections.synchronizedMap(new LinkedHashMap<>());
 	private final Map<InjectionContext.CurrentContext, Provider> providers = Collections.synchronizedMap(new LinkedHashMap<>());
 	private final GlobalContext globalContext;
