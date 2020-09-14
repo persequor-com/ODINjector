@@ -47,6 +47,18 @@ public class OdinJector {
 		return getInstance(InjectionContext.get(new ArrayList<>(), type));
 	}
 
+	public <T> T getInstance(Class<Context> context, Class<T> type) {
+		return getInstance(InjectionContext.get(new ArrayList<>(getDynamicContexts(Collections.singletonList(context))), type));
+	}
+
+	public <T> List<T> getInstances(Class<T> type) {
+		return getInstances(InjectionContext.get(new ArrayList<>(), type));
+	}
+
+	public <T> List<T> getInstances(Class<Context> context, Class<T> type) {
+		return getInstances(InjectionContext.get(new ArrayList<>(getDynamicContexts(Collections.singletonList(context))), type));
+	}
+
 	@SuppressWarnings("unchecked")
 	<T> T getInstance(InjectionContext<T> injectionContext) {
 		return (T)providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> {
@@ -66,7 +78,7 @@ public class OdinJector {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> List<T> getInstances(InjectionContext<T> injectionContext) {
+	<T> List<T> getInstances(InjectionContext<T> injectionContext) {
 		return (List<T>)providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> {
 			setup(injectionContext);
 
