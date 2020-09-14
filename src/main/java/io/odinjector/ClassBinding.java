@@ -10,15 +10,22 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings({"rawtypes","unchecked"})
 public class ClassBinding<T> implements Binding<T> {
 	Class<?> toClass;
+	boolean setAsSingleton;
 
-	private  <T> ClassBinding(Class<? extends T> toClass) {
+	private ClassBinding(Class<? extends T> toClass, boolean setAsSingleton) {
 		this.toClass = toClass;
+		this.setAsSingleton = setAsSingleton;
 	}
 
 	public static <T> ClassBinding<T> of(Class<? extends T> toClass) {
-		return new ClassBinding<>(toClass);
+		return new ClassBinding<>(toClass, false);
+	}
+
+	public static <T> ClassBinding<T> of(Class<? extends T> toClass, boolean setAsSingleton) {
+		return new ClassBinding<>(toClass, setAsSingleton);
 	}
 
 	public Provider<T> getProvider(Context context, InjectionContext<T> thisInjectionContext, OdinJector injector) {
@@ -75,7 +82,7 @@ public class ClassBinding<T> implements Binding<T> {
 
 	@Override
 	public boolean isSingleton() {
-		return toClass.isAnnotationPresent(Singleton.class);
+		return setAsSingleton || toClass.isAnnotationPresent(Singleton.class);
 	}
 
 	private Class<?> getClassFromType(Type type) {

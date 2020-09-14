@@ -8,6 +8,7 @@ import io.odinjector.testclasses.ClassWithListInjection;
 import io.odinjector.testclasses.ClassWithProviderInjection;
 import io.odinjector.testclasses.ClassWithRecursiveHierarchialContext;
 import io.odinjector.testclasses.ContextualDependencies;
+import io.odinjector.testclasses.Hierarchy;
 import io.odinjector.testclasses.InterfaceForClassWithNonRecursiveHierarchialContext;
 import io.odinjector.testclasses.MyAltCtx;
 import io.odinjector.testclasses.MyCtx;
@@ -94,6 +95,15 @@ public class OdinJectorTest {
 	public void getSingleton() {
 		SingletonImpl actual1 = odinJector.getInstance(SingletonImpl.class);
 		SingletonImpl actual2 = odinJector.getInstance(SingletonImpl.class);
+
+		assertSame(actual1, actual2);
+	}
+
+	@Test
+	public void getSingleton_setInContext() {
+		odinJector.addContext(new SingletonCtx());
+		Hierarchy actual1 = odinJector.getInstance(Hierarchy.class);
+		Hierarchy actual2 = odinJector.getInstance(Hierarchy.class);
 
 		assertSame(actual1, actual2);
 	}
