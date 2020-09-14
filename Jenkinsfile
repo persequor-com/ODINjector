@@ -1,4 +1,9 @@
 pipeline {
+	agent {
+		node {
+			label "ssh-slave"
+		}
+	}
 
 	parameters {
 		booleanParam(name: 'PERFORM_RELEASE', defaultValue: false, description: "Performs release setting release version number, publish release artifacts and tags version.")
