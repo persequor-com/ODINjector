@@ -13,6 +13,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ContextualInject {
-	Class<? extends Context>[] value();
+	Class<? extends ContextMarker>[] value();
 	boolean recursive() default false;
 }

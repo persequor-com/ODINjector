@@ -8,9 +8,11 @@ import io.odinjector.testclasses.ClassWithListInjection;
 import io.odinjector.testclasses.ClassWithProviderInjection;
 import io.odinjector.testclasses.ClassWithRecursiveHierarchialContext;
 import io.odinjector.testclasses.ContextualDependencies;
+import io.odinjector.testclasses.ContextualDependenciesWithMarker;
 import io.odinjector.testclasses.Hierarchy;
 import io.odinjector.testclasses.InterfaceForClassWithNonRecursiveHierarchialContext;
 import io.odinjector.testclasses.MyAltCtx;
+import io.odinjector.testclasses.MyAltCtxWithMarker;
 import io.odinjector.testclasses.MyCtx;
 import io.odinjector.testclasses.MyOtherAltCtx;
 import io.odinjector.testclasses.SingletonCtx;
@@ -128,6 +130,14 @@ public class OdinJectorTest {
 	@Test
 	public void getDependency_fromContextualInject() {
 		ContextualDependencies actual1 = odinJector.getInstance(ContextualDependencies.class);
+
+		assertSame(TestImpl2.class, actual1.getDependency().getClass());
+	}
+
+	@Test
+	public void getDependency_fromContextualMarkerInject() {
+		odinJector.addDynamicContext(new MyAltCtxWithMarker());
+		ContextualDependenciesWithMarker actual1 = odinJector.getInstance(ContextualDependenciesWithMarker.class);
 
 		assertSame(TestImpl2.class, actual1.getDependency().getClass());
 	}
