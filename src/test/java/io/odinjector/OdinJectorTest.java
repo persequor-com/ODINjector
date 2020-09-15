@@ -22,8 +22,11 @@ import io.odinjector.testclasses.TestImpl1;
 import io.odinjector.testclasses.TestImpl2;
 import io.odinjector.testclasses.TestImpl3;
 import io.odinjector.testclasses.TestInterface1;
+import io.odinjector.testclasses.UnboundInterface;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -192,5 +195,17 @@ public class OdinJectorTest {
 
 		assertSame(AltHierarchyImpl.class, actual.getHierarchy().getClass());
 		assertSame(TestImpl3.class, actual.getTestInterface1().getClass());
+	}
+
+	@Test(expected = InjectionException.class)
+	public void getInstance_withNoImplementations() {
+		odinJector.getInstance(UnboundInterface.class);
+	}
+
+	@Test
+	public void getOptionalInstance_withNoImplementations() {
+		Optional<UnboundInterface> actual = odinJector.getOptionalInstance(UnboundInterface.class);
+
+		assertFalse(actual.isPresent());
 	}
 }

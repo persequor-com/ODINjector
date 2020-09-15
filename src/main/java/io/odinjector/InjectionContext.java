@@ -13,12 +13,23 @@ public class InjectionContext<T> {
 	Deque<List<Context>> nextContexts;
 	List<Context> recursiveContext = new ArrayList<>();
 	Class<T> clazz;
+	InjectionOptions options = InjectionOptions.get();
+
+	static <C> InjectionContext<C> get(List<Context> context, Class<C> clazz, InjectionOptions options) {
+		InjectionContext<C> ic = new  InjectionContext<>();
+		ic.context = context;
+		ic.nextContexts = new ArrayDeque<>();
+		ic.clazz = clazz;
+		ic.options = options;
+		return ic;
+	}
 
 	static <C> InjectionContext<C> get(List<Context> context, Class<C> clazz) {
 		InjectionContext<C> ic = new  InjectionContext<>();
 		ic.context = context;
 		ic.nextContexts = new ArrayDeque<>();
 		ic.clazz = clazz;
+		ic.options = InjectionOptions.get();
 		return ic;
 	}
 
@@ -38,6 +49,7 @@ public class InjectionContext<T> {
 		ic.nextContexts = nextContexts;
 		ic.clazz = parameterType;
 		ic.recursiveContext = this.recursiveContext;
+		ic.options = this.options.forNext();
 		return ic;
 	}
 
@@ -66,8 +78,7 @@ public class InjectionContext<T> {
 
 	public String logOutput() {
 		return "class: "+clazz.getName()
-				+" Context: "+(this.context != null ? this.context.stream().map(c -> c.getClass().getName()).collect(Collectors.joining(", ")):"")
-				+" next: "+(this.nextContexts != null ? this.nextContexts.stream().map(l -> l.stream().map(cl -> cl.getClass().getName()).collect(Collectors.joining(","))).collect(Collectors.joining(" | ")):"");
+				+" Context: "+(this.context != null ? this.context.stream().map(c -> c.getClass().getName()).collect(Collectors.joining(", ")):"");
 	}
 
 	public InjectionContext<T> copy() {
@@ -76,7 +87,12 @@ public class InjectionContext<T> {
 		injectionContext.recursiveContext = new ArrayList<>(this.recursiveContext);
 		injectionContext.context = new ArrayList<>(this.context);
 		injectionContext.clazz = this.clazz;
+		injectionContext.options = InjectionOptions.get();
 		return injectionContext;
+	}
+
+	public boolean isOptional() {
+		return options.optional;
 	}
 
 	public static class CurrentContext<T> {

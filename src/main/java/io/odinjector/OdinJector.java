@@ -6,6 +6,7 @@
 package io.odinjector;
 
 import javax.inject.Provider;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -47,8 +49,16 @@ public class OdinJector {
 		return getInstance(InjectionContext.get(new ArrayList<>(), type));
 	}
 
+	public <T> Optional<T> getOptionalInstance(Class<T> type) {
+		return Optional.ofNullable(getInstance(InjectionContext.get(new ArrayList<>(), type, InjectionOptions.get().optional())));
+	}
+
 	public <T> T getInstance(Class<?> context, Class<T> type) {
 		return getInstance(InjectionContext.get(new ArrayList<>(getDynamicContexts(Collections.singletonList(context))), type));
+	}
+
+	public <T> T getOptionalInstance(Class<?> context, Class<T> type) {
+		return getInstance(InjectionContext.get(new ArrayList<>(getDynamicContexts(Collections.singletonList(context))), type, InjectionOptions.get().optional()));
 	}
 
 	public <T> List<T> getInstances(Class<T> type) {
@@ -65,6 +75,16 @@ public class OdinJector {
 			setup(injectionContext);
 
 			BindingResult<T> binding = getBoundClass(globalContext, injectionContext);
+			if (binding.binding.getElementClass() == injectionContext.clazz
+					&& (injectionContext.clazz.isInterface() || Modifier.isAbstract(injectionContext.clazz.getModifiers()))
+			) {
+				if (injectionContext.isOptional()) {
+					return () -> null;
+				} else {
+					throw new InjectionException("Unable to find binding for: "+injectionContext.logOutput());
+				}
+			}
+
 			setupForBinding(injectionContext, binding);
 
 			Provider<T> provider = binding.binding.getProvider(globalContext, injectionContext, this);

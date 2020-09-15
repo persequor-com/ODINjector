@@ -9,7 +9,7 @@ public class BindingResult<T> {
 	}
 
 	public boolean isEmpty() {
-		return binding != null;
+		return binding == null;
 	}
 
 	public static <C> BindingResult<C> of(Binding<C> binding, Context context) {
