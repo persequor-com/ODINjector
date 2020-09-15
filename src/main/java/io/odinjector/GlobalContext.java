@@ -1,5 +1,6 @@
 package io.odinjector;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +38,9 @@ public class GlobalContext extends Context {
 			if (!bindings.isEmpty()) {
 				return bindings;
 			}
+		}
+		if (injectionContext.isOptional() && (injectionContext.clazz.isInterface() || Modifier.isAbstract(injectionContext.clazz.getModifiers()))) {
+			return Collections.emptyList();
 		}
 		return Collections.singletonList(BindingResult.of(ClassBinding.of(injectionContext.clazz), this));
 	}

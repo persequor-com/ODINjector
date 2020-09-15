@@ -26,6 +26,7 @@ import io.odinjector.testclasses.UnboundInterface;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
@@ -207,5 +208,13 @@ public class OdinJectorTest {
 		Optional<UnboundInterface> actual = odinJector.getOptionalInstance(UnboundInterface.class);
 
 		assertFalse(actual.isPresent());
+	}
+
+	@Test
+	public void getInstances_withNoImplementations() {
+		List<UnboundInterface> actual = odinJector.getInstances(UnboundInterface.class);
+
+		assertNotNull(actual);
+		assertTrue(actual.isEmpty());
 	}
 }

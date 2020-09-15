@@ -62,11 +62,11 @@ public class OdinJector {
 	}
 
 	public <T> List<T> getInstances(Class<T> type) {
-		return getInstances(InjectionContext.get(new ArrayList<>(), type));
+		return getInstances(InjectionContext.get(new ArrayList<>(), type, InjectionOptions.get().optional()));
 	}
 
 	public <T> List<T> getInstances(Class<?> context, Class<T> type) {
-		return getInstances(InjectionContext.get(new ArrayList<>(getDynamicContexts(Collections.singletonList(context))), type));
+		return getInstances(InjectionContext.get(new ArrayList<>(getDynamicContexts(Collections.singletonList(context))), type, InjectionOptions.get().optional()));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -75,9 +75,7 @@ public class OdinJector {
 			setup(injectionContext);
 
 			BindingResult<T> binding = getBoundClass(globalContext, injectionContext);
-			if (binding.binding.getElementClass() == injectionContext.clazz
-					&& (injectionContext.clazz.isInterface() || Modifier.isAbstract(injectionContext.clazz.getModifiers()))
-			) {
+			if (binding.isEmpty()) {
 				if (injectionContext.isOptional()) {
 					return () -> null;
 				} else {
