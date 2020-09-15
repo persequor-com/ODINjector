@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public abstract class Context implements ContextMarker {
+public abstract class Context {
 	Map<Class<?>, List<Binding<?>>> contextBindings = new ConcurrentHashMap<>();
 	Map<Class<?>, Provider<?>> providers = new ConcurrentHashMap<>();
 	Map<Class<?>, Object> singletons = new ConcurrentHashMap<>();
@@ -40,7 +40,7 @@ public abstract class Context implements ContextMarker {
 		return (T)singletons.computeIfAbsent(clazz, c2 -> provider.get());
 	}
 
-	public Class<? extends ContextMarker> getMarkedContext() {
+	public Class<?> getMarkedContext() {
 		return getClass();
 	}
 }

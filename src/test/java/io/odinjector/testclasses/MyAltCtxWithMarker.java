@@ -2,7 +2,6 @@ package io.odinjector.testclasses;
 
 import io.odinjector.Binder;
 import io.odinjector.Context;
-import io.odinjector.ContextMarker;
 
 public class MyAltCtxWithMarker extends Context {
 	@Override
@@ -12,7 +11,7 @@ public class MyAltCtxWithMarker extends Context {
 	}
 
 	@Override
-	public Class<? extends ContextMarker> getMarkedContext() {
+	public Class<?> getMarkedContext() {
 		return MyAltCtxMarker.class;
 	}
 }

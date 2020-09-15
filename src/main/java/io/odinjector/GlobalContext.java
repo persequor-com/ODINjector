@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 public class GlobalContext extends Context {
-	private final Map<Class<? extends ContextMarker>, Context> registeredContexts;
+	private final Map<Class<?>, Context> registeredContexts;
 
-	public GlobalContext(Map<Class<? extends ContextMarker>, Context> contexts) {
+	public GlobalContext(Map<Class<?>, Context> contexts) {
 		this.registeredContexts = contexts;
 	}
 

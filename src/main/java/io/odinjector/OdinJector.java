@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("rawtypes")
 public class OdinJector {
-	private final Map<Class<? extends ContextMarker>, Context> contexts = Collections.synchronizedMap(new LinkedHashMap<>());
-	private final Map<Class<? extends ContextMarker>, Context> dynamicContexts = Collections.synchronizedMap(new LinkedHashMap<>());
+	private final Map<Class<?>, Context> contexts = Collections.synchronizedMap(new LinkedHashMap<>());
+	private final Map<Class<?>, Context> dynamicContexts = Collections.synchronizedMap(new LinkedHashMap<>());
 	private final Map<InjectionContext.CurrentContext, Provider> providers = Collections.synchronizedMap(new LinkedHashMap<>());
 	private final GlobalContext globalContext;
 
@@ -47,7 +47,7 @@ public class OdinJector {
 		return getInstance(InjectionContext.get(new ArrayList<>(), type));
 	}
 
-	public <T> T getInstance(Class<Context> context, Class<T> type) {
+	public <T> T getInstance(Class<?> context, Class<T> type) {
 		return getInstance(InjectionContext.get(new ArrayList<>(getDynamicContexts(Collections.singletonList(context))), type));
 	}
 
@@ -55,7 +55,7 @@ public class OdinJector {
 		return getInstances(InjectionContext.get(new ArrayList<>(), type));
 	}
 
-	public <T> List<T> getInstances(Class<Context> context, Class<T> type) {
+	public <T> List<T> getInstances(Class<?> context, Class<T> type) {
 		return getInstances(InjectionContext.get(new ArrayList<>(getDynamicContexts(Collections.singletonList(context))), type));
 	}
 
@@ -96,14 +96,14 @@ public class OdinJector {
 	private <T> void setupForBinding(InjectionContext<T> injectionContext, BindingResult<T> binding) {
 		if (binding.binding.getElementClass().isAnnotationPresent(ContextualInject.class)) {
 			ContextualInject annotation = binding.binding.getElementClass().getAnnotation(ContextualInject.class);
-			List<Class<? extends ContextMarker>> annotationContextClasses = Arrays.asList(annotation.value());
+			List<Class<?>> annotationContextClasses = Arrays.asList(annotation.value());
 			Collection<? extends Context> annotationContexts = getDynamicContexts(annotationContextClasses);
 			injectionContext.context.addAll(0, annotationContexts);
 			injectionContext.addToNext(annotationContexts, annotation.recursive());
 		}
 	}
 
-	private Collection<? extends Context> getDynamicContexts(List<Class<? extends ContextMarker>> annotationContexts) {
+	private Collection<? extends Context> getDynamicContexts(List<Class<?>> annotationContexts) {
 		return annotationContexts.stream().map(ac -> {
 			if (!dynamicContexts.containsKey(ac)) {
 				throw new InjectionException("Unable to find a registered dynamic context for: "+ac.getName());
@@ -116,7 +116,7 @@ public class OdinJector {
 		Class<T> clazz = injectionContext.clazz;
 
 		if (clazz.isAnnotationPresent(ContextualInject.class)) {
-			List<Class<? extends ContextMarker>> contextClasses = Arrays.asList(clazz.getAnnotation(ContextualInject.class).value());
+			List<Class<?>> contextClasses = Arrays.asList(clazz.getAnnotation(ContextualInject.class).value());
 
 			injectionContext.context.addAll(0, getDynamicContexts(contextClasses));
 
