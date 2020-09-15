@@ -16,6 +16,7 @@ import io.odinjector.testclasses.MyAltCtxWithMarker;
 import io.odinjector.testclasses.MyCtx;
 import io.odinjector.testclasses.MyMultipleBindingsCtx;
 import io.odinjector.testclasses.MyOtherAltCtx;
+import io.odinjector.testclasses.ProviderCtx;
 import io.odinjector.testclasses.SingletonCtx;
 import io.odinjector.testclasses.SingletonImpl;
 import io.odinjector.testclasses.TestImpl1;
@@ -216,5 +217,13 @@ public class OdinJectorTest {
 
 		assertNotNull(actual);
 		assertTrue(actual.isEmpty());
+	}
+
+	@Test
+	public void getInstanceFromProvider() {
+		odinJector.addContext(new ProviderCtx());
+		TestInterface1 actual = odinJector.getInstance(TestInterface1.class);
+
+		assertSame(TestImpl2.class, actual.getClass());
 	}
 }

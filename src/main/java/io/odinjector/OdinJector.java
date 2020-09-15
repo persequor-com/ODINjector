@@ -112,7 +112,7 @@ public class OdinJector {
 
 
 	private <T> void setupForBinding(InjectionContext<T> injectionContext, BindingResult<T> binding) {
-		if (binding.binding.getElementClass().isAnnotationPresent(ContextualInject.class)) {
+		if (binding.binding.getElementClass() != null && binding.binding.getElementClass().isAnnotationPresent(ContextualInject.class)) {
 			ContextualInject annotation = binding.binding.getElementClass().getAnnotation(ContextualInject.class);
 			List<Class<?>> annotationContextClasses = Arrays.asList(annotation.value());
 			Collection<? extends Context> annotationContexts = getDynamicContexts(annotationContextClasses);
