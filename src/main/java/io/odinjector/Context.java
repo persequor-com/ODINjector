@@ -43,4 +43,17 @@ public abstract class Context {
 	public Class<?> getMarkedContext() {
 		return getClass();
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == null) {
+			return false;
+		}
+		return getClass().equals(o.getClass());
+	}
+
+	@Override
+	public int hashCode() {
+		return getClass().hashCode();
+	}
 }

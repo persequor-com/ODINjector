@@ -226,4 +226,24 @@ public class OdinJectorTest {
 
 		assertSame(TestImpl2.class, actual.getClass());
 	}
+
+	@Test(expected = InjectionException.class)
+	public void getInstance_fromContext_withNoImplementations() {
+		odinJector.getInstance(MyAltCtx.class, UnboundInterface.class);
+	}
+
+	@Test
+	public void getOptionalInstance_fromContext_withNoImplementations() {
+		Optional<UnboundInterface> actual = odinJector.getOptionalInstance(MyAltCtx.class, UnboundInterface.class);
+
+		assertFalse(actual.isPresent());
+	}
+
+	@Test
+	public void getInstances_fromContext_withNoImplementations() {
+		List<UnboundInterface> actual = odinJector.getInstances(MyAltCtx.class, UnboundInterface.class);
+
+		assertNotNull(actual);
+		assertTrue(actual.isEmpty());
+	}
 }

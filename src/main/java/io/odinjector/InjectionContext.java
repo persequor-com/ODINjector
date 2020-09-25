@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class InjectionContext<T> {
@@ -102,6 +103,20 @@ public class InjectionContext<T> {
 		public CurrentContext(List<Context> context, Class<T> clazz) {
 			this.context = context;
 			this.clazz = clazz;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			CurrentContext<?> that = (CurrentContext<?>) o;
+			return (Objects.equals(context, that.context)) &&
+					Objects.equals(clazz, that.clazz);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(context, clazz);
 		}
 	}
 }

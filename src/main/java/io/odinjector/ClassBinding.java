@@ -7,6 +7,7 @@ import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,20 +35,20 @@ public class ClassBinding<T> implements Binding<T> {
 						.orElseThrow(() -> new InjectionException("Unable to find constructor which has the @Inject annotation or is parameterless on: "+toClass.getName())));
 
 
-		Object[] args = new Object[constructor.getParameterTypes().length];
-		int i=0;
+		List<Provider> args = new ArrayList<>();
+		int i = 0;
 		for(Class<?> parameterType : constructor.getParameterTypes()) {
 			if (parameterType == List.class) {
 				AnnotatedType annotatedType = constructor.getParameters()[i].getAnnotatedType();
 				Class<?> listElementType = getClassFromType(annotatedType.getType());
-				args[i++] = injector.getInstances(thisInjectionContext.nextContextFor(listElementType));
+				args.add(() -> injector.getInstances(thisInjectionContext.nextContextFor(listElementType)));
 //				args[i++] = context.getBindings(thisInjectionContext.context, listElementType).stream().map().collect(Collectors.toList());
 			} else if (parameterType == Provider.class) {
 				AnnotatedType annotatedType = constructor.getParameters()[i].getAnnotatedType();
 				Class<?> providerElementType = getClassFromType(annotatedType.getType());
-				args[i++] = (Provider)() -> injector.getInstance(thisInjectionContext.nextContextFor(providerElementType));
+				args.add(() -> (Provider)() -> injector.getInstance(thisInjectionContext.nextContextFor(providerElementType)));
 			} else {
-				args[i++] = injector.getInstance(thisInjectionContext.nextContextFor(parameterType));
+				args.add(() -> injector.getInstance(thisInjectionContext.nextContextFor(parameterType)));
 			}
 		}
 
@@ -56,10 +57,10 @@ public class ClassBinding<T> implements Binding<T> {
 
 	private static class ClassBindingProvider<C> implements Provider<C> {
 		private Constructor<?> constructor;
-		private Object[] args;
+		private List<Provider> args;
 		private Class<C> toClass;
 
-		private ClassBindingProvider(Constructor<?> constructor, Object[] args, Class<C> toClass) {
+		private ClassBindingProvider(Constructor<?> constructor, List<Provider> args, Class<C> toClass) {
 			this.constructor = constructor;
 			this.args = args;
 			this.toClass = toClass;
@@ -68,7 +69,7 @@ public class ClassBinding<T> implements Binding<T> {
 		@Override
 		public C get() {
 			try {
-				return (C)constructor.newInstance(args);
+				return (C)constructor.newInstance(args.stream().map(Provider::get).toArray());
 			} catch (Exception e) {
 				throw new InjectionException("Unable to construct "+toClass.getName(),e);
 			}
