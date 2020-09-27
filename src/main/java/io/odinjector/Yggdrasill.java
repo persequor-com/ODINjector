@@ -75,12 +75,21 @@ class Yggdrasill extends Context {
 
 	ContextConfiguration getAnnotationConfiguration(Class<?> elementClass) {
 		ContextConfiguration configuration = new ContextConfiguration();
-		annotations.forEach((c, consumer) -> {
-			if (elementClass.getAnnotation(c) != null) {
-				Annotation instance = elementClass.getAnnotation(c);
-				consumer.accept(instance, configuration);
+		Class<?> workingClass = elementClass;
+		while(workingClass != Object.class) {
+			for (Map.Entry<Class<? extends Annotation>, BiConsumer<Object, ContextConfiguration>> entry : annotations.entrySet()) {
+				Class<? extends Annotation> c = entry.getKey();
+				BiConsumer<Object, ContextConfiguration> consumer = entry.getValue();
+				if (workingClass.getAnnotation(c) != null) {
+					Annotation instance = elementClass.getAnnotation(c);
+					consumer.accept(instance, configuration);
+				}
 			}
-		});
+			workingClass = workingClass.getSuperclass();
+			if (workingClass == null) {
+				break;
+			}
+		}
 		return configuration;
 	}
 }

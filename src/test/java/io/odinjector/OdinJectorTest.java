@@ -11,6 +11,7 @@ import io.odinjector.testclasses.ClassWithRecursiveHierarchialContext;
 import io.odinjector.testclasses.ContextualDependencies;
 import io.odinjector.testclasses.ContextualDependenciesWithMarker;
 import io.odinjector.testclasses.CustomAnnotation;
+import io.odinjector.testclasses.ExtendingClassWithCustomAnnotation;
 import io.odinjector.testclasses.Hierarchy;
 import io.odinjector.testclasses.InterfaceForClassWithNonRecursiveHierarchialContext;
 import io.odinjector.testclasses.MyAltCtx;
@@ -257,6 +258,17 @@ public class OdinJectorTest {
 		});
 
 		ClassWithCustomAnntation actaul = odinJector.getInstance(ClassWithCustomAnntation.class);
+
+		assertSame(TestImpl2.class, actaul.getInterface().getClass());
+	}
+
+	@Test
+	public void customAnnotation_onParentClass() {
+		odinJector.addAnnotation(CustomAnnotation.class, (ca, conf) -> {
+			conf.addContext(MyAltCtx.class);
+		});
+
+		ExtendingClassWithCustomAnnotation actaul = odinJector.getInstance(ExtendingClassWithCustomAnnotation.class);
 
 		assertSame(TestImpl2.class, actaul.getInterface().getClass());
 	}
