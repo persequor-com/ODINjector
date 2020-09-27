@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class Providers {
@@ -14,6 +15,7 @@ class Providers {
 
 	private final Yggdrasill yggdrasill;
 	private OdinJector odin;
+	private Function<Class<?>, Object> fallback = null;
 
 	public Providers(Yggdrasill yggdrasill, OdinJector odin) {
 		this.yggdrasill = yggdrasill;
@@ -26,7 +28,11 @@ class Providers {
 			configureInjectionContextBeforeBinding(injectionContext);
 
 			BindingResult<T> binding = getBoundClass(yggdrasill, injectionContext);
-			if (binding.isEmpty()) {
+
+			if (binding.isEmpty() || binding.isInterface()) {
+				if (injectionContext.clazz.isInterface() && fallback != null) {
+					return () -> fallback.apply(injectionContext.clazz);
+				}
 				if (injectionContext.isOptional()) {
 					return () -> null;
 				} else {
@@ -63,25 +69,27 @@ class Providers {
 
 
 	private <T> void configureInjectionContextOnBinding(InjectionContext<T> injectionContext, BindingResult<T> binding) {
-		if (binding.binding.getElementClass() != null && binding.binding.getElementClass().isAnnotationPresent(ContextualInject.class)) {
-			ContextualInject annotation = binding.binding.getElementClass().getAnnotation(ContextualInject.class);
-			List<Class<?>> annotationContextClasses = Arrays.asList(annotation.value());
-			Collection<? extends Context> annotationContexts = yggdrasill.getDynamicContexts(annotationContextClasses);
-			injectionContext.context.addAll(0, annotationContexts);
-			injectionContext.addToNext(annotationContexts, annotation.recursive());
+		if (binding.binding.getElementClass() != null) {
+			ContextConfiguration config = yggdrasill.getAnnotationConfiguration(binding.binding.getElementClass());
+
+			if (config.contexts.size() > 0) {
+				Collection<? extends Context> annotationContexts = yggdrasill.getDynamicContexts(config.contexts);
+				injectionContext.context.addAll(0, annotationContexts);
+				injectionContext.addToNext(annotationContexts, config.recursive);
+			}
 		}
 	}
 
 	private <T> void configureInjectionContextBeforeBinding(InjectionContext<T> injectionContext) {
 		Class<T> clazz = injectionContext.clazz;
 
-		if (clazz.isAnnotationPresent(ContextualInject.class)) {
-			ContextualInject annotation = clazz.getAnnotation(ContextualInject.class);
-			List<Class<?>> contextClasses = Arrays.asList(annotation.value());
+		ContextConfiguration config = yggdrasill.getAnnotationConfiguration(clazz);
+		if (config.contexts.size() > 0) {
+			List<Class<?>> contextClasses = config.contexts;
 
 			injectionContext.context.addAll(0, yggdrasill.getDynamicContexts(contextClasses));
 
-			injectionContext.addNext(yggdrasill.getDynamicContexts(contextClasses), annotation.recursive());
+			injectionContext.addNext(yggdrasill.getDynamicContexts(contextClasses), config.recursive);
 		}
 	}
 
@@ -94,5 +102,9 @@ class Providers {
 
 	private <T> List<BindingResult<T>> getBoundClasses(Context context, InjectionContext<T> thisInjectionContext) {
 		return context.getBindings(thisInjectionContext);
+	}
+
+	public void setFallback(Function<Class<?>, Object> fallback) {
+		this.fallback = fallback;
 	}
 }

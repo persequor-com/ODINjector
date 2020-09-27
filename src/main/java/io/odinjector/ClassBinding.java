@@ -86,6 +86,11 @@ public class ClassBinding<T> implements Binding<T> {
 		return setAsSingleton || toClass.isAnnotationPresent(Singleton.class);
 	}
 
+	@Override
+	public boolean isInterface() {
+		return toClass.isInterface();
+	}
+
 	private Class<?> getClassFromType(Type type) {
 		if (type instanceof ParameterizedType) {
 			return (Class<?>)((ParameterizedType) type).getActualTypeArguments()[0];

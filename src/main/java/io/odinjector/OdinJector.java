@@ -5,11 +5,14 @@
  */
 package io.odinjector;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("rawtypes")
@@ -20,6 +23,9 @@ public class OdinJector {
 	private OdinJector() {
 		yggdrasill = new Yggdrasill();
 		providers = new Providers(yggdrasill, this);
+		yggdrasill.addAnnotation(ContextualInject.class, (ci, config) -> {
+			config.recursive(ci.recursive()).addContext(ci.value());
+		});
 	}
 
 	public static OdinJector create() {
@@ -33,6 +39,16 @@ public class OdinJector {
 
 	public OdinJector addDynamicContext(Context context) {
 		yggdrasill.addDynamicContext(context);
+		return this;
+	}
+
+	public <T extends Annotation> OdinJector addAnnotation(Class<T> annotation, BiConsumer<T, ContextConfiguration> consumer) {
+		yggdrasill.addAnnotation(annotation, consumer);
+		return this;
+	}
+
+	public OdinJector setFallback(Function<Class<?>, Object> fallback) {
+		providers.setFallback(fallback);
 		return this;
 	}
 

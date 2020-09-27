@@ -22,4 +22,8 @@ public class BindingResult<T> {
 	public static <T> BindingResult<T> empty() {
 		return new BindingResult<>();
 	}
+
+	public boolean isInterface() {
+		return binding.isInterface();
+	}
 }

@@ -1,6 +1,7 @@
 package io.odinjector;
 
 import io.odinjector.testclasses.AltHierarchyImpl;
+import io.odinjector.testclasses.ClassWithCustomAnntation;
 import io.odinjector.testclasses.ClassWithMultipleContexts;
 import io.odinjector.testclasses.ClassWithNonRecursiveHierarchialContext;
 import io.odinjector.testclasses.ClassWithInterfaceInjection;
@@ -9,6 +10,7 @@ import io.odinjector.testclasses.ClassWithProviderInjection;
 import io.odinjector.testclasses.ClassWithRecursiveHierarchialContext;
 import io.odinjector.testclasses.ContextualDependencies;
 import io.odinjector.testclasses.ContextualDependenciesWithMarker;
+import io.odinjector.testclasses.CustomAnnotation;
 import io.odinjector.testclasses.Hierarchy;
 import io.odinjector.testclasses.InterfaceForClassWithNonRecursiveHierarchialContext;
 import io.odinjector.testclasses.MyAltCtx;
@@ -24,6 +26,7 @@ import io.odinjector.testclasses.TestImpl2;
 import io.odinjector.testclasses.TestImpl3;
 import io.odinjector.testclasses.TestInterface1;
 import io.odinjector.testclasses.UnboundInterface;
+import io.odinjector.testclasses.UnboundInterfaceImplementation;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -245,5 +248,30 @@ public class OdinJectorTest {
 
 		assertNotNull(actual);
 		assertTrue(actual.isEmpty());
+	}
+
+	@Test
+	public void customAnnotation() {
+		odinJector.addAnnotation(CustomAnnotation.class, (ca, conf) -> {
+			conf.addContext(MyAltCtx.class);
+		});
+
+		ClassWithCustomAnntation actaul = odinJector.getInstance(ClassWithCustomAnntation.class);
+
+		assertSame(TestImpl2.class, actaul.getInterface().getClass());
+	}
+
+	@Test
+	public void fallbackProvider() {
+		odinJector.setFallback((c) -> {
+			if (c == UnboundInterface.class) {
+				return new UnboundInterfaceImplementation();
+			}
+			throw new RuntimeException("Unexpected class fallback");
+		});
+
+		UnboundInterface actual = odinJector.getInstance(UnboundInterface.class);
+
+		assertSame(UnboundInterfaceImplementation.class, actual.getClass());
 	}
 }

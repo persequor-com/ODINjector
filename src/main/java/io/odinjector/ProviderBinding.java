@@ -33,4 +33,9 @@ public class ProviderBinding<T> implements Binding<T> {
 	public boolean isSingleton() {
 		return setAsSingleton;
 	}
+
+	@Override
+	public boolean isInterface() {
+		return false;
+	}
 }
