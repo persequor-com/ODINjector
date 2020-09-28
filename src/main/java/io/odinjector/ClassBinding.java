@@ -50,6 +50,7 @@ public class ClassBinding<T> implements Binding<T> {
 			} else {
 				args.add(() -> injector.getInstance(thisInjectionContext.nextContextFor(parameterType)));
 			}
+			i++;
 		}
 
 		return new ClassBindingProvider(constructor, args, toClass);

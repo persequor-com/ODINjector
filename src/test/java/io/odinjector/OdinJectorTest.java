@@ -19,6 +19,7 @@ import io.odinjector.testclasses.MyAltCtxWithMarker;
 import io.odinjector.testclasses.MyCtx;
 import io.odinjector.testclasses.MyMultipleBindingsCtx;
 import io.odinjector.testclasses.MyOtherAltCtx;
+import io.odinjector.testclasses.ProviderAsSecondParameter;
 import io.odinjector.testclasses.ProviderCtx;
 import io.odinjector.testclasses.SingletonCtx;
 import io.odinjector.testclasses.SingletonImpl;
@@ -67,6 +68,13 @@ public class OdinJectorTest {
 	@Test
 	public void getClassWithProviderDependency() {
 		ClassWithProviderInjection actual = odinJector.getInstance(ClassWithProviderInjection.class);
+
+		assertSame(TestImpl1.class, actual.get().getClass());
+	}
+
+	@Test
+	public void getClassWithProviderDependency_asSecondParameter() {
+		ProviderAsSecondParameter actual = odinJector.getInstance(ProviderAsSecondParameter.class);
 
 		assertSame(TestImpl1.class, actual.get().getClass());
 	}
