@@ -81,7 +81,7 @@ class Yggdrasill extends Context {
 				Class<? extends Annotation> c = entry.getKey();
 				BiConsumer<Object, ContextConfiguration> consumer = entry.getValue();
 				if (workingClass.getAnnotation(c) != null) {
-					Annotation instance = elementClass.getAnnotation(c);
+					Annotation instance = workingClass.getAnnotation(c);
 					consumer.accept(instance, configuration);
 				}
 			}
