@@ -96,6 +96,6 @@ public class ClassBinding<T> implements Binding<T> {
 		if (type instanceof ParameterizedType) {
 			return (Class<?>)((ParameterizedType) type).getActualTypeArguments()[0];
 		}
-		throw new InjectionException("Could not find element type for: "+type.getTypeName());
+		throw new InjectionException("Could not find type parameter for generic class: "+type.getTypeName());
 	}
 }
