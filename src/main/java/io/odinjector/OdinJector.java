@@ -16,7 +16,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("rawtypes")
-public class OdinJector {
+public class OdinJector implements Injector {
 	private final Providers providers;
 	private final Yggdrasill yggdrasill;
 
@@ -25,6 +25,13 @@ public class OdinJector {
 		providers = new Providers(yggdrasill, this);
 		yggdrasill.addAnnotation(ContextualInject.class, (ci, config) -> {
 			config.recursive(ci.recursive()).addContext(ci.value());
+		});
+		Injector injector = this;
+		addContext(new Context() {
+			@Override
+			public void configure(Binder binder) {
+				binder.bind(Injector.class).to(() -> injector);
+			}
 		});
 	}
 

@@ -2,6 +2,7 @@ package io.odinjector;
 
 import io.odinjector.testclasses.AltHierarchyImpl;
 import io.odinjector.testclasses.ClassWithCustomAnntation;
+import io.odinjector.testclasses.ClassWithInjectorInjected;
 import io.odinjector.testclasses.ClassWithMultipleContexts;
 import io.odinjector.testclasses.ClassWithNonRecursiveHierarchialContext;
 import io.odinjector.testclasses.ClassWithInterfaceInjection;
@@ -293,5 +294,12 @@ public class OdinJectorTest {
 		UnboundInterface actual = odinJector.getInstance(UnboundInterface.class);
 
 		assertSame(UnboundInterfaceImplementation.class, actual.getClass());
+	}
+
+	@Test
+	public void injectorBinding() {
+		ClassWithInjectorInjected actual = odinJector.getInstance(ClassWithInjectorInjected.class);
+
+		assertSame(TestImpl1.class, actual.getImplementation().getClass());
 	}
 }
