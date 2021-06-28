@@ -20,13 +20,13 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: paulhatch/semantic-version@v4.0.2
+      - name: versioning
+        uses: paulhatch/semantic-version@v4.0.2
         with:
           tag_prefix: "v"
           major_pattern: "(MAJOR)"
           minor_pattern: "(MINOR)"
           format: "${major}.${minor}.${patch}-${increment}"
-          change_path: "src/my-service"
           bump_each_commit: false
       - name: Setup java
         uses: actions/setup-java@v2
@@ -38,7 +38,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
       - name: Publish package
-        run: ./gradlew -Pversion=${{version}} publish
+        run: ./gradlew -Pversion=${{steps.versioning.outputs.version}} publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
