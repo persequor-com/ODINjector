@@ -18,6 +18,8 @@ jobs:
     name: Java ${{ matrix.Java }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - uses: paulhatch/semantic-version@v4.0.2
         with:
           tag_prefix: "v"
@@ -36,7 +38,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
       - name: Publish package
-        run: ./gradlew publish
+        run: ./gradlew -Pversion=${{version}} publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
