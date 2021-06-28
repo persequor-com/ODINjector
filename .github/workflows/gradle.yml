@@ -12,6 +12,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      packages: write
     strategy:
       matrix:
         java: [ '8' ] # , '11', '13', '15' ]
