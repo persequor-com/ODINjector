@@ -28,6 +28,7 @@ jobs:
           minor_pattern: "(MINOR)"
           format: "${major}.${minor}.${patch}-${increment}"
           bump_each_commit: false
+        id: versioning
       - name: Setup java
         uses: actions/setup-java@v2
         with:
