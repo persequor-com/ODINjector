@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        java: [ '8', '11', '13', '15' ]
+        java: [ '8' ] # , '11', '13', '15' ]
     name: Java ${{ matrix.Java }}
     steps:
       - uses: paulhatch/semantic-version@v4.0.2
