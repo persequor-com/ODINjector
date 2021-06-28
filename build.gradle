@@ -30,8 +30,8 @@ publishing {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/persequor-com/packages")
             credentials {
-                username = System.getenv("GITHUB_PUBLISH_ACTOR")
-                password = System.getenv("GITHUB_PUBLISH_TOKEN")
+                username = System.getenv("PUBLISH_ACTOR")
+                password = System.getenv("PUBLISH_TOKEN")
             }
         }
     }
