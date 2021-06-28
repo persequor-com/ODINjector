@@ -23,34 +23,28 @@ repositories {
     mavenCentral()
 }
 
-repositories {
-    mavenCentral()
-}
 
 publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/persequor-com/ODINjector")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
     publications {
-        psqrPublication(MavenPublication) {
+        gpr(MavenPublication) {
+            groupId 'io.odinjector'
+            artifactId = 'odinjector'
+
             from(components.java)
         }
     }
-    publishing {
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/persequor-com/ODINjector")
-                credentials {
-                    username = System.getenv("GITHUB_ACTOR")
-                    password = System.getenv("GITHUB_TOKEN")
-                }
-            }
-        }
-        publications {
-            gpr(MavenPublication) {
-                from(components.java)
-            }
-        }
-    }
 }
+
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
