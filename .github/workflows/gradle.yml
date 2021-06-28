@@ -37,6 +37,7 @@ jobs:
         run: chmod +x gradlew
       - name: Build with Gradle
         run: ./gradlew build
+      - uses: hmarr/debug-action@v2
       - name: Publish package
         run: ./gradlew -Pversion=${{steps.versioning.outputs.version}} publish
         env:
