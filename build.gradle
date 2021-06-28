@@ -25,27 +25,6 @@ repositories {
 
 repositories {
     mavenCentral()
-    maven {
-        url = psqr_private_maven_snapshot_local_repository_url
-        credentials {
-            username psqr_private_maven_repository_username
-            password psqr_private_maven_repository_password
-        }
-        mavenContent {
-            snapshotsOnly()
-        }
-    }
-
-    maven {
-        url = psqr_private_maven_releases_local_repository_url
-        credentials {
-            username psqr_private_maven_repository_username
-            password psqr_private_maven_repository_password
-        }
-        mavenContent {
-            releasesOnly()
-        }
-    }
 }
 
 publishing {
@@ -54,31 +33,20 @@ publishing {
             from(components.java)
         }
     }
-    repositories {
-        // Publication to Maven is based on if we pass a project property as in ./gradlew publish -PpublishPublic
-        // to select private repo (default) or public repository.
-        // 'publish public' is our known term for stages releasing publicly.
-        // It is design to be called twice from CI build pipeline instead of publishing to both in parallel.
-        // This is to see if private publish succeeds first, before sharing anything publicly and because it is easier
-        // to clean private artifact repo in case we need to re-run.
-        // We also want to call both publishing tasks individually because only the public one is done when it is a release build.
-        if (project.hasProperty('publishPublic')) {
+    publishing {
+        repositories {
             maven {
-                name = 'psqr_public_maven'
-                url = psqr_public_maven_publish_release_local_repository_url
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/persequor-com/ODINjector")
                 credentials {
-                    username psqr_public_maven_publish_repository_username
-                    password psqr_public_maven_publish_repository_password
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
                 }
             }
-        } else {
-            maven {
-                name = 'psqr_private_maven'
-                url = version.endsWith('-SNAPSHOT') ? psqr_private_maven_publish_snapshot_local_repository_url : psqr_private_maven_publish_release_local_repository_url
-                credentials {
-                    username psqr_private_maven_publish_repository_username
-                    password psqr_private_maven_publish_repository_password
-                }
+        }
+        publications {
+            gpr(MavenPublication) {
+                from(components.java)
             }
         }
     }
