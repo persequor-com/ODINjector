@@ -43,6 +43,7 @@ jobs:
         run: ./gradlew build
       - name: Publish package
         run: ./gradlew -Pversion=${{steps.versioning.outputs.version}} publish
+        env:
           PUBLISH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLISH_ACTOR: ${{ secrets.GITHUB_ACTOR }}
 
