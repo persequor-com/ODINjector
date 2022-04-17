@@ -3,13 +3,11 @@ package io.odinjector;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.lang.reflect.AnnotatedType;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 @SuppressWarnings({"rawtypes","unchecked"})
 public class ClassBinding<T> implements Binding<T> {
@@ -38,39 +36,64 @@ public class ClassBinding<T> implements Binding<T> {
 		List<Provider> args = new ArrayList<>();
 		int i = 0;
 		for(Class<?> parameterType : constructor.getParameterTypes()) {
-			if (parameterType == List.class) {
-				AnnotatedType annotatedType = constructor.getParameters()[i].getAnnotatedType();
-				Class<?> listElementType = getClassFromType(annotatedType.getType());
-				args.add(() -> injector.getInstances(thisInjectionContext.nextContextFor(listElementType)));
-//				args[i++] = context.getBindings(thisInjectionContext.context, listElementType).stream().map().collect(Collectors.toList());
-			} else if (parameterType == Provider.class) {
-				AnnotatedType annotatedType = constructor.getParameters()[i].getAnnotatedType();
-				Class<?> providerElementType = getClassFromType(annotatedType.getType());
-				args.add(() -> (Provider)() -> injector.getInstance(thisInjectionContext.nextContextFor(providerElementType)));
-			} else {
-				args.add(() -> injector.getInstance(thisInjectionContext.nextContextFor(parameterType)));
-			}
+			args.add(getInjection(thisInjectionContext, injector, constructor.getParameters(), i, parameterType));
 			i++;
 		}
+		List<Consumer<T>> additionalInjectors = new ArrayList<>();
+		for(Method method : toClass.getMethods()) {
+			if (method.isAnnotationPresent(Inject.class)) {
+				List<Provider> methodArgs = new ArrayList<>();
+				int x = 0;
+				for(Class<?> parameterType : method.getParameterTypes()) {
+					methodArgs.add(getInjection(thisInjectionContext, injector, method.getParameters(), x, parameterType));
+					x++;
+				}
+				additionalInjectors.add((t) -> {
+					try {
+						method.invoke(t,methodArgs.stream().map(Provider::get).toArray());
+					} catch (IllegalAccessException | InvocationTargetException e) {
+						throw new RuntimeException(e);
+					}
+				});
+			}
+		}
 
-		return new ClassBindingProvider(constructor, args, toClass);
+		return new ClassBindingProvider(constructor, args, toClass, additionalInjectors);
+	}
+
+	private Provider getInjection(InjectionContext<T> thisInjectionContext, OdinJector injector, Parameter[] parameters, int paramNum, Class<?> parameterType) {
+		if (parameterType == List.class) {
+			AnnotatedType annotatedType = parameters[paramNum].getAnnotatedType();
+			Class<?> listElementType = getClassFromType(annotatedType.getType());
+			return () -> injector.getInstances(thisInjectionContext.nextContextFor(listElementType));
+		} else if (parameterType == Provider.class) {
+			AnnotatedType annotatedType = parameters[paramNum].getAnnotatedType();
+			Class<?> providerElementType = getClassFromType(annotatedType.getType());
+			return () -> (Provider)() -> injector.getInstance(thisInjectionContext.nextContextFor(providerElementType));
+		} else {
+			return () -> injector.getInstance(thisInjectionContext.nextContextFor(parameterType));
+		}
 	}
 
 	private static class ClassBindingProvider<C> implements Provider<C> {
 		private Constructor<?> constructor;
 		private List<Provider> args;
 		private Class<C> toClass;
+		private List<Consumer<C>> additionalInjectors;
 
-		private ClassBindingProvider(Constructor<?> constructor, List<Provider> args, Class<C> toClass) {
+		private ClassBindingProvider(Constructor<?> constructor, List<Provider> args, Class<C> toClass, List<Consumer<C>> additionalInjectors) {
 			this.constructor = constructor;
 			this.args = args;
 			this.toClass = toClass;
+			this.additionalInjectors = additionalInjectors;
 		}
 
 		@Override
 		public C get() {
 			try {
-				return (C)constructor.newInstance(args.stream().map(Provider::get).toArray());
+				C res = (C) constructor.newInstance(args.stream().map(Provider::get).toArray());
+				additionalInjectors.forEach(c -> c.accept(res));
+				return res;
 			} catch (Exception e) {
 				throw new InjectionException("Unable to construct "+toClass.getName(),e);
 			}
