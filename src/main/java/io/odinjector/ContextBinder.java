@@ -23,7 +23,7 @@ public class ContextBinder implements Binder {
 
 			@Override
 			public void to(Provider<? extends T> provider) {
-				context.contextBindings.put(fromClass, Collections.singletonList(ProviderBinding.of(provider, setAsSingleton)));
+				context.contextBindings.put(fromClass, Collections.singletonList(ProviderBinding.of((Provider)provider, fromClass, setAsSingleton)));
 			}
 
 			@Override
@@ -37,5 +37,20 @@ public class ContextBinder implements Binder {
 				context.contextBindings.computeIfAbsent(fromClass, f -> new ArrayList<>()).add(ClassBinding.of(toClass, setAsSingleton));
 			}
 		};
+	}
+
+	@Override
+	public void injectionListener(BindingListener listener) {
+		context.addListener(listener);
+	}
+
+	@Override
+	public void bindPackageToContext(Package aPackage) {
+		context.addPackageBinding(aPackage);
+	}
+
+	@Override
+	public void bindingResultListener(BindingResultListener listener) {
+		context.addBindingResultListener(listener);
 	}
 }

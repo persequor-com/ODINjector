@@ -2,13 +2,11 @@ package io.odinjector;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("rawtypes")
 public class OdinJector implements Injector {
@@ -55,31 +53,33 @@ public class OdinJector implements Injector {
 	}
 
 	public <T> T getInstance(Class<T> type) {
-		return getInstance(InjectionContext.get(new ArrayList<>(), type));
+		return getInstance(InjectionContextImpl.get(new ArrayList<>(), type));
 	}
 
 	public <T> Optional<T> getOptionalInstance(Class<T> type) {
-		return Optional.ofNullable(getInstance(InjectionContext.get(new ArrayList<>(), type, InjectionOptions.get().optional())));
+		return Optional.ofNullable(getInstance(InjectionContextImpl.get(new ArrayList<>(), type, InjectionOptions.get().optional())));
 	}
 
 	public <T> T getInstance(Class<?> context, Class<T> type) {
-		return getInstance(InjectionContext.get(new ArrayList<>(yggdrasill.getDynamicContexts(Collections.singletonList(context))), type));
+		return getInstance(InjectionContextImpl.get(new ArrayList<>(yggdrasill.getDynamicContexts(Collections.singletonList(context))), type));
 	}
 
 	public <T> Optional<T> getOptionalInstance(Class<?> context, Class<T> type) {
-		return Optional.ofNullable(getInstance(InjectionContext.get(new ArrayList<>(yggdrasill.getDynamicContexts(Collections.singletonList(context))), type, InjectionOptions.get().optional())));
+		return Optional.ofNullable(getInstance(InjectionContextImpl.get(new ArrayList<>(yggdrasill.getDynamicContexts(Collections.singletonList(context))), type, InjectionOptions.get().optional())));
 	}
 
 	public <T> List<T> getInstances(Class<T> type) {
-		return getInstances(InjectionContext.get(new ArrayList<>(), type, InjectionOptions.get().optional()));
+		return getInstances(InjectionContextImpl.get(new ArrayList<>(), type, InjectionOptions.get().optional()));
 	}
 
 	public <T> List<T> getInstances(Class<?> context, Class<T> type) {
-		return getInstances(InjectionContext.get(new ArrayList<>(yggdrasill.getDynamicContexts(Collections.singletonList(context))), type, InjectionOptions.get().optional()));
+		return getInstances(InjectionContextImpl.get(new ArrayList<>(yggdrasill.getDynamicContexts(Collections.singletonList(context))), type, InjectionOptions.get().optional()));
 	}
 
+	public static int i = 0;
 	@SuppressWarnings("unchecked")
 	<T> T getInstance(InjectionContext<T> injectionContext) {
+		i ++;
 		return providers.get(injectionContext).get();
 	}
 

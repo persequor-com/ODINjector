@@ -5,18 +5,20 @@ import javax.inject.Provider;
 public class ProviderBinding<T> implements Binding<T> {
 	private Provider<T> provider;
 	private boolean setAsSingleton;
+	private Class<T> clazz;
 
-	private ProviderBinding(Provider<T> provider, boolean setAsSingleton) {
+	private ProviderBinding(Provider<T> provider, boolean setAsSingleton, Class<T> clazz) {
 		this.provider = provider;
 		this.setAsSingleton = setAsSingleton;
+		this.clazz = clazz;
 	}
 
-	public static <C> ProviderBinding<C> of(Provider<C> provider) {
-		return new ProviderBinding<>(provider, false);
+	public static <C> ProviderBinding<C> of(Provider<C> provider, Class<C> clazz) {
+		return new ProviderBinding<>(provider, false, clazz);
 	}
 
-	public static <C> ProviderBinding<C> of(Provider<C> provider, boolean setAsSingleton) {
-		return new ProviderBinding<>(provider, setAsSingleton);
+	public static <C> ProviderBinding<C> of(Provider<C> provider, Class<C> clazz, boolean setAsSingleton) {
+		return new ProviderBinding<>(provider, setAsSingleton, clazz);
 	}
 
 	@Override

@@ -34,19 +34,15 @@ public class ClassBinding<T> implements Binding<T> {
 
 
 		List<Provider> args = new ArrayList<>();
-		int i = 0;
-		for(Class<?> parameterType : constructor.getParameterTypes()) {
-			args.add(getInjection(thisInjectionContext, injector, constructor.getParameters(), i, parameterType));
-			i++;
+		for(int i=0;i<constructor.getParameters().length;i++) {
+			args.add(getInjection(thisInjectionContext, injector, constructor.getParameters()[i].getType(), constructor.getParameters()[i].getAnnotatedType(), new BindingTarget.ParameterTarget(constructor.getParameters()[i])));
 		}
 		List<Consumer<T>> additionalInjectors = new ArrayList<>();
-		for(Method method : toClass.getMethods()) {
+		for(Method method : toClass.getDeclaredMethods()) {
 			if (method.isAnnotationPresent(Inject.class)) {
 				List<Provider> methodArgs = new ArrayList<>();
-				int x = 0;
-				for(Class<?> parameterType : method.getParameterTypes()) {
-					methodArgs.add(getInjection(thisInjectionContext, injector, method.getParameters(), x, parameterType));
-					x++;
+				for(int x=0;x<method.getParameters().length;x++) {
+					methodArgs.add(getInjection(thisInjectionContext, injector, method.getParameters()[x].getType(), method.getParameters()[x].getAnnotatedType(), new BindingTarget.ParameterTarget(method.getParameters()[x])));
 				}
 				additionalInjectors.add((t) -> {
 					try {
@@ -58,30 +54,47 @@ public class ClassBinding<T> implements Binding<T> {
 			}
 		}
 
-		return new ClassBindingProvider(constructor, args, toClass, additionalInjectors);
+		for(Field field : toClass.getDeclaredFields()) {
+			if (field.isAnnotationPresent(Inject.class)) {
+				field.setAccessible(true);
+				additionalInjectors.add((t) -> {
+					try {
+						field.set(t, getInjection(thisInjectionContext, injector, field.getType(), field.getAnnotatedType(), new BindingTarget.FieldTarget(field)).get());
+					} catch (IllegalAccessException e) {
+						throw new RuntimeException(e);
+					}
+				});
+			}
+		}
+
+		return new ClassBindingProvider(thisInjectionContext, constructor, args, toClass, additionalInjectors);
 	}
 
-	private Provider getInjection(InjectionContext<T> thisInjectionContext, OdinJector injector, Parameter[] parameters, int paramNum, Class<?> parameterType) {
-		if (parameterType == List.class) {
-			AnnotatedType annotatedType = parameters[paramNum].getAnnotatedType();
+	private Provider<T> getInjection(InjectionContext<T> thisInjectionContext, OdinJector injector, Class type, AnnotatedType annotatedType, BindingTarget target) {
+		return getInjectionProvider(thisInjectionContext, injector, type, annotatedType, target);
+	}
+
+	private Provider getInjectionProvider(InjectionContext<T> thisInjectionContext, OdinJector injector, Class type, AnnotatedType annotatedType, BindingTarget target) {
+		if (type == List.class) {
 			Class<?> listElementType = getClassFromType(annotatedType.getType());
-			return () -> injector.getInstances(thisInjectionContext.nextContextFor(listElementType));
-		} else if (parameterType == Provider.class) {
-			AnnotatedType annotatedType = parameters[paramNum].getAnnotatedType();
+			return () -> injector.getInstances(thisInjectionContext.nextContextFor(listElementType, target));
+		} else if (type == Provider.class) {
 			Class<?> providerElementType = getClassFromType(annotatedType.getType());
-			return () -> (Provider)() -> injector.getInstance(thisInjectionContext.nextContextFor(providerElementType));
+			return () -> (Provider)() -> injector.getInstance(thisInjectionContext.nextContextFor(providerElementType, target));
 		} else {
-			return () -> injector.getInstance(thisInjectionContext.nextContextFor(parameterType));
+			return () -> injector.getInstance(thisInjectionContext.nextContextFor(type, target));
 		}
 	}
 
 	private static class ClassBindingProvider<C> implements Provider<C> {
+		private InjectionContext<C> thisInjectionContext;
 		private Constructor<?> constructor;
 		private List<Provider> args;
 		private Class<C> toClass;
 		private List<Consumer<C>> additionalInjectors;
 
-		private ClassBindingProvider(Constructor<?> constructor, List<Provider> args, Class<C> toClass, List<Consumer<C>> additionalInjectors) {
+		private ClassBindingProvider(InjectionContext<C> thisInjectionContext, Constructor<?> constructor, List<Provider> args, Class<C> toClass, List<Consumer<C>> additionalInjectors) {
+			this.thisInjectionContext = thisInjectionContext;
 			this.constructor = constructor;
 			this.args = args;
 			this.toClass = toClass;

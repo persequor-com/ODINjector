@@ -1,17 +1,13 @@
 package io.odinjector;
 
 import javax.inject.Provider;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class Providers {
-	private final Map<InjectionContext.CurrentContext, Provider> providers = Collections.synchronizedMap(new LinkedHashMap<>());
+	private final Map<InjectionContextImpl.CurrentContext, Provider> providers = new ConcurrentHashMap<>();
 
 	private final Yggdrasill yggdrasill;
 	private OdinJector odin;
@@ -26,12 +22,11 @@ class Providers {
 	public <T> Provider<T> get(InjectionContext<T> injectionContext) {
 		return (Provider<T>) providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> {
 			configureInjectionContextBeforeBinding(injectionContext);
-
 			BindingResult<T> binding = getBoundClass(yggdrasill, injectionContext);
 
 			if (binding.isEmpty() || binding.isInterface()) {
-				if (injectionContext.clazz.isInterface() && fallback != null) {
-					return () -> fallback.apply(injectionContext.clazz);
+				if (injectionContext.getClazz().isInterface() && fallback != null) {
+					return () -> fallback.apply(injectionContext.getClazz());
 				}
 				if (injectionContext.isOptional()) {
 					return () -> null;
@@ -42,12 +37,13 @@ class Providers {
 
 			configureInjectionContextOnBinding(injectionContext, binding);
 
+
 			Provider<T> provider = binding.binding.getProvider(yggdrasill, injectionContext, odin);
 
 			if (binding.binding.isSingleton()) {
-				return () -> binding.context.singleton(injectionContext.clazz, provider);
+				return new WrappingProvider(injectionContext, new SingletonProvider(binding.context.singleton(injectionContext.getClazz(), provider)));
 			} else {
-				return provider;
+				return new WrappingProvider(injectionContext, provider);
 			}
 		});
 	}
@@ -74,20 +70,20 @@ class Providers {
 
 			if (config.contexts.size() > 0) {
 				Collection<? extends Context> annotationContexts = yggdrasill.getDynamicContexts(config.contexts);
-				injectionContext.context.addAll(0, annotationContexts);
+				injectionContext.getContext().addAll(0, annotationContexts);
 				injectionContext.addToNext(annotationContexts, config.recursive);
 			}
 		}
 	}
 
 	private <T> void configureInjectionContextBeforeBinding(InjectionContext<T> injectionContext) {
-		Class<T> clazz = injectionContext.clazz;
+		Class<T> clazz = injectionContext.getClazz();
 
 		ContextConfiguration config = yggdrasill.getAnnotationConfiguration(clazz);
 		if (config.contexts.size() > 0) {
 			List<Class<?>> contextClasses = config.contexts;
 
-			injectionContext.context.addAll(0, yggdrasill.getDynamicContexts(contextClasses));
+			injectionContext.getContext().addAll(0, yggdrasill.getDynamicContexts(contextClasses));
 
 			injectionContext.addNext(yggdrasill.getDynamicContexts(contextClasses), config.recursive);
 		}
@@ -106,5 +102,22 @@ class Providers {
 
 	public void setFallback(Function<Class<?>, Object> fallback) {
 		this.fallback = fallback;
+	}
+
+	private static class WrappingProvider<T> implements Provider<T> {
+		private final InjectionContext<T> injectionContext;
+		private final Provider<T> provider;
+
+		public WrappingProvider(InjectionContext<T> injectionContext, Provider<T> provider) {
+			this.injectionContext = injectionContext;
+			this.provider = provider;
+		}
+
+		@Override
+		public T get() {
+			T t = provider.get();
+			injectionContext.applyBindingResultListeners(t);
+			return injectionContext.wrap(t);
+		}
 	}
 }

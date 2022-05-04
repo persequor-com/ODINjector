@@ -31,8 +31,8 @@ class Yggdrasill extends Context {
 	}
 
 	<T> List<BindingResult<T>> getBindings(InjectionContext<T> injectionContext) {
-		if (injectionContext.context != null) {
-			List<Context> list = new ArrayList<>(injectionContext.context);
+		if (injectionContext.getContext() != null) {
+			List<Context> list = new ArrayList<>(injectionContext.getContext());
 			Collections.reverse(list);
 			for (Context context : list) {
 				List<BindingResult<T>> bindings = context.getBindings(injectionContext);
@@ -49,10 +49,10 @@ class Yggdrasill extends Context {
 				return bindings;
 			}
 		}
-		if (injectionContext.isOptional() && (injectionContext.clazz.isInterface() || Modifier.isAbstract(injectionContext.clazz.getModifiers()))) {
+		if (injectionContext.isOptional() && (injectionContext.getClazz().isInterface() || Modifier.isAbstract(injectionContext.getClazz().getModifiers()))) {
 			return Collections.emptyList();
 		}
-		return Collections.singletonList(BindingResult.of(ClassBinding.of(injectionContext.clazz), this));
+		return Collections.singletonList(BindingResult.of(ClassBinding.of(injectionContext.getClazz()), this));
 	}
 
 	List<? extends Context> getDynamicContexts(List<Class<?>> annotationContexts) {

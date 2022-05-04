@@ -3,11 +3,17 @@ package io.odinjector;
 import io.odinjector.testclasses.*;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class OdinJectorTest {
 	OdinJector odinJector;
@@ -279,5 +285,106 @@ public class OdinJectorTest {
 		ClassWithInjectorInjected actual = odinJector.getInstance(ClassWithInjectorInjected.class);
 
 		assertSame(TestImpl1.class, actual.getImplementation().getClass());
+	}
+
+	@Test
+	public void wrapObjectUsingListener() {
+		odinJector = OdinJector.create();
+		TestInterface1 mock = Mockito.mock(TestInterface1.class);
+		odinJector.addContext(new Context() {
+			@Override
+			public void configure(Binder binder) {
+				binder.bindPackageToContext(TestImpl1.class.getPackage());
+				binder.injectionListener((injectionContext) -> {
+					injectionContext.wrap((obj) -> Mockito.spy(obj));
+				});
+			}
+		});
+		TestImpl1 actual = odinJector.getInstance(TestImpl1.class);
+
+		actual.muh();
+		verify(actual).muh();
+	}
+
+	@Test
+	public void wrapObjectUsingListener_forCertainObjects() {
+		odinJector = OdinJector.create();
+		TestInterface1 mock = Mockito.mock(TestInterface1.class);
+		odinJector.addContext(new Context() {
+			@Override
+			public void configure(Binder binder) {
+				binder.bindPackageToContext(TestImpl1.class.getPackage());
+				binder.bind(TestInterface1.class).to(TestImpl1.class);
+				binder.injectionListener((injectionContext) -> {
+					if(injectionContext.getTarget().hasAnnotation(Wrapped.class) && injectionContext.getClazz() == TestInterface1.class) {
+						injectionContext.wrap((o) -> mock);
+					}
+				});
+			}
+		});
+		AllInjectionTypes actual = odinJector.getInstance(AllInjectionTypes.class);
+
+		actual.runAll();
+
+		verify(mock, times(3)).muh();
+	}
+
+	@Test(expected = RuntimeException.class)
+	public void wrapObjectUsingBindingResultListener_failOnMockInjected() {
+		odinJector = OdinJector.create();
+		TestInterface1 mock = Mockito.mock(TestInterface1.class);
+		odinJector.addContext(new Context() {
+			@Override
+			public void configure(Binder binder) {
+				binder.bindPackageToContext(TestImpl1.class.getPackage());
+				binder.bind(TestInterface1.class).to(() -> Mockito.mock(TestInterface1.class));
+				binder.bindingResultListener(brl -> {
+					if (brl.getBoundClass().getSimpleName().contains("$MockitoMock$")) {
+						throw new RuntimeException("This is a mock");
+					}
+				});
+			}
+		});
+		AllInjectionTypes actual = odinJector.getInstance(AllInjectionTypes.class);
+	}
+
+//	@Test
+	public void runAll() throws Throwable {
+		List<Method> methods = new ArrayList<>();
+		for (Method m : OdinJectorTest.class.getMethods()) {
+			if (m.getAnnotation(Test.class) != null && !m.getName().equals("runAll")) {
+				methods.add(m);
+			}
+		}
+		long s = System.currentTimeMillis();
+		int success = 0;
+		int fail = 0;
+
+		List<Thread> threads = new ArrayList<>();
+		for(int i=0;i<50;i++) {
+			Thread t = new Thread(() -> {
+				Object previous = null;
+				for(int x =0;x<1_000_000;x++) {
+					TestImpl1 actual1 = odinJector.getInstance(TestImpl1.class);
+					if (previous == null) {
+						previous = actual1;
+					} else {
+						assertNotSame(previous, actual1);
+					}
+				}
+			});
+			threads.add(t);
+		}
+		threads.forEach(Thread::run);
+		threads.forEach(t -> {
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		});
+		System.out.println(System.currentTimeMillis()-s);
+		System.out.println(success+" vs "+fail);
+		System.out.println(OdinJector.i);
 	}
 }

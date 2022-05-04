@@ -1,9 +1,7 @@
 package io.odinjector;
 
 import javax.inject.Provider;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -11,7 +9,9 @@ public abstract class Context {
 	Map<Class<?>, List<Binding<?>>> contextBindings = new ConcurrentHashMap<>();
 	Map<Class<?>, Provider<?>> providers = new ConcurrentHashMap<>();
 	Map<Class<?>, Object> singletons = new ConcurrentHashMap<>();
-
+	Map<Class<?>, BindingListener> bindingListeners = new ConcurrentHashMap<>();
+	Set<Package> packageBindings = Collections.synchronizedSet(new HashSet<>());
+	Map<Class<?>, BindingResultListener> bindingResultListeners = new ConcurrentHashMap<>();
 
 	public abstract void configure(Binder binder);
 
@@ -21,9 +21,15 @@ public abstract class Context {
 
 	@SuppressWarnings("unchecked")
 	<T> List<BindingResult<T>> getBindings(InjectionContext<T> injectionContext) {
-		List res = (List) (contextBindings.containsKey(injectionContext.clazz)
-				? contextBindings.get(injectionContext.clazz).stream().map(b -> BindingResult.of(b, this)).collect(Collectors.toList())
-				: Collections.emptyList());
+		bindingListeners.values().forEach(bl -> bl.listen(injectionContext));
+		injectionContext.setResultListeners(bindingResultListeners);
+		if (!contextBindings.containsKey(injectionContext.getClazz()) && packageBindings.contains(injectionContext.getClazz().getPackage())) {
+			contextBindings.put(injectionContext.getClazz(), Collections.singletonList(ClassBinding.of(injectionContext.getClazz(), false)));
+		}
+		List res = (List) (contextBindings.containsKey(injectionContext.getClazz())
+			? contextBindings.get(injectionContext.getClazz()).stream().map(b -> BindingResult.of(b, this)).collect(Collectors.toList())
+			: Collections.emptyList()
+		);
 		return res;
 	}
 
@@ -55,5 +61,21 @@ public abstract class Context {
 	@Override
 	public int hashCode() {
 		return getClass().hashCode();
+	}
+
+	public void addListener(BindingListener listener) {
+		bindingListeners.put(listener.getClass(), listener);
+	}
+
+	public Map<Class<?>, BindingListener> getBindingListeners() {
+		return bindingListeners;
+	}
+
+	public void addPackageBinding(Package aPackage) {
+		packageBindings.add(aPackage);
+	}
+
+	public void addBindingResultListener(BindingResultListener listener) {
+		bindingResultListeners.put(listener.getClass(),listener);
 	}
 }
