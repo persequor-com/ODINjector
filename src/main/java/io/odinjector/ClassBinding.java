@@ -11,25 +11,25 @@ import java.util.function.Consumer;
 
 @SuppressWarnings({"rawtypes","unchecked"})
 public class ClassBinding<T> implements Binding<T> {
-	Class<?> toClass;
+	BindingKey<?> toClass;
 	boolean setAsSingleton;
 
-	private ClassBinding(Class<? extends T> toClass, boolean setAsSingleton) {
+	private ClassBinding(BindingKey<? extends T> toClass, boolean setAsSingleton) {
 		this.toClass = toClass;
 		this.setAsSingleton = setAsSingleton;
 	}
 
-	public static <T> ClassBinding<T> of(Class<? extends T> toClass) {
+	public static <T> ClassBinding<T> of(BindingKey<? extends T> toClass) {
 		return new ClassBinding<>(toClass, false);
 	}
 
-	public static <T> ClassBinding<T> of(Class<? extends T> toClass, boolean setAsSingleton) {
+	public static <T> ClassBinding<T> of(BindingKey<? extends T> toClass, boolean setAsSingleton) {
 		return new ClassBinding<>(toClass, setAsSingleton);
 	}
 
 	public Provider<T> getProvider(Context context, InjectionContext<T> thisInjectionContext, OdinJector injector) {
-		Constructor<?> constructor = Arrays.stream(toClass.getConstructors()).filter(const1 -> const1.isAnnotationPresent(Inject.class)).findFirst()
-				.orElseGet(() -> Arrays.stream(toClass.getConstructors()).filter(c2 -> c2.getParameterTypes().length == 0).findFirst()
+		Constructor<?> constructor = Arrays.stream(toClass.getBoundClass().getConstructors()).filter(const1 -> const1.isAnnotationPresent(Inject.class)).findFirst()
+				.orElseGet(() -> Arrays.stream(toClass.getBoundClass().getConstructors()).filter(c2 -> c2.getParameterTypes().length == 0).findFirst()
 						.orElseThrow(() -> new InjectionException("Unable to find constructor which has the @Inject annotation or is parameterless on: "+toClass.getName())));
 
 
@@ -90,14 +90,14 @@ public class ClassBinding<T> implements Binding<T> {
 		private InjectionContext<C> thisInjectionContext;
 		private Constructor<?> constructor;
 		private List<Provider> args;
-		private Class<C> toClass;
+		private BindingKey<C> toBindingKey;
 		private List<Consumer<C>> additionalInjectors;
 
-		private ClassBindingProvider(InjectionContext<C> thisInjectionContext, Constructor<?> constructor, List<Provider> args, Class<C> toClass, List<Consumer<C>> additionalInjectors) {
+		private ClassBindingProvider(InjectionContext<C> thisInjectionContext, Constructor<?> constructor, List<Provider> args, BindingKey<C> toBindingKey, List<Consumer<C>> additionalInjectors) {
 			this.thisInjectionContext = thisInjectionContext;
 			this.constructor = constructor;
 			this.args = args;
-			this.toClass = toClass;
+			this.toBindingKey = toBindingKey;
 			this.additionalInjectors = additionalInjectors;
 		}
 
@@ -108,14 +108,14 @@ public class ClassBinding<T> implements Binding<T> {
 				additionalInjectors.forEach(c -> c.accept(res));
 				return res;
 			} catch (Exception e) {
-				throw new InjectionException("Unable to construct "+toClass.getName(),e);
+				throw new InjectionException("Unable to construct "+ toBindingKey.getName(),e);
 			}
 		}
 	}
 
 	@Override
 	public Class<T> getElementClass() {
-		return (Class<T>)toClass;
+		return (Class<T>)toClass.getBoundClass();
 	}
 
 	@Override

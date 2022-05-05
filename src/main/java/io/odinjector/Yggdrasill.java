@@ -49,10 +49,10 @@ class Yggdrasill extends Context {
 				return bindings;
 			}
 		}
-		if (injectionContext.isOptional() && (injectionContext.getClazz().isInterface() || Modifier.isAbstract(injectionContext.getClazz().getModifiers()))) {
+		if (injectionContext.isOptional() && (injectionContext.getBindingKey().isInterface() || Modifier.isAbstract(injectionContext.getBindingKey().getModifiers()))) {
 			return Collections.emptyList();
 		}
-		return Collections.singletonList(BindingResult.of(ClassBinding.of(injectionContext.getClazz()), this));
+		return Collections.singletonList(BindingResult.of(ClassBinding.of(injectionContext.getBindingKey()), this));
 	}
 
 	List<? extends Context> getDynamicContexts(List<Class<?>> annotationContexts) {

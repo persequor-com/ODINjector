@@ -3,7 +3,7 @@ package io.odinjector;
 import java.util.function.Function;
 
 public interface BindingResultModifier<T> {
-    Class<? extends T> getSourceClass();
-    Class<? extends T> getBoundClass();
+    BindingKey<? extends T> getSource();
+    BindingKey<? extends T> getBound();
     void wrap(Function<T, T> t);
 }

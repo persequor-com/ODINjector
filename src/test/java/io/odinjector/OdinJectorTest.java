@@ -9,11 +9,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class OdinJectorTest {
 	OdinJector odinJector;
@@ -316,7 +314,7 @@ public class OdinJectorTest {
 				binder.bindPackageToContext(TestImpl1.class.getPackage());
 				binder.bind(TestInterface1.class).to(TestImpl1.class);
 				binder.injectionListener((injectionContext) -> {
-					if(injectionContext.getTarget().hasAnnotation(Wrapped.class) && injectionContext.getClazz() == TestInterface1.class) {
+					if(injectionContext.getTarget().hasAnnotation(Wrapped.class) && injectionContext.getBindingKey().getBoundClass() == TestInterface1.class) {
 						injectionContext.wrap((o) -> mock);
 					}
 				});
@@ -339,7 +337,7 @@ public class OdinJectorTest {
 				binder.bindPackageToContext(TestImpl1.class.getPackage());
 				binder.bind(TestInterface1.class).to(() -> Mockito.mock(TestInterface1.class));
 				binder.bindingResultListener(brl -> {
-					if (brl.getBoundClass().getSimpleName().contains("$MockitoMock$")) {
+					if (brl.getBound().getBoundClass().getSimpleName().contains("$MockitoMock$")) {
 						throw new RuntimeException("This is a mock");
 					}
 				});
@@ -347,6 +345,69 @@ public class OdinJectorTest {
 		});
 		AllInjectionTypes actual = odinJector.getInstance(AllInjectionTypes.class);
 	}
+
+	@Test
+	public void dependsOnGeneric() {
+		odinJector = OdinJector.create();
+		TestImpl1 mock = Mockito.mock(TestImpl1.class);
+		odinJector.addContext(new Context() {
+			@Override
+			public void configure(Binder binder) {
+				binder.bind(TestImpl1.class).to(() -> mock);
+				binder.bind(TestInterface1.class).to(TestImpl1.class);
+				binder.bind(BindingKey.get(MyGeneric.class, TestInterface1.class)).to(Provides.of(TestImpl1.class, MyGeneric::new));
+			}
+		});
+		MyGeneric<TestInterface1> actual = odinJector.getInstance(new BindingKey<>(MyGeneric.class, TestInterface1.class));
+
+		actual.doThis();
+		verify(mock).muh();
+	}
+
+	@Test
+	public void dependsOnSpecificGeneric() {
+		odinJector = OdinJector.create();
+		TestImpl1 mock = Mockito.mock(TestImpl1.class);
+		TestImpl2 mock2 = Mockito.mock(TestImpl2.class);
+		odinJector.addContext(new Context() {
+			@Override
+			public void configure(Binder binder) {
+				binder.bind(TestImpl1.class).to(() -> mock);
+				binder.bind(TestImpl2.class).to(() -> mock2);
+				binder.bind(BindingKey.get(MyGeneric.class, TestImpl1.class)).to(Provides.of(TestImpl1.class, MyGeneric::new));
+				binder.bind(BindingKey.get(MyGeneric.class, TestImpl2.class)).to(Provides.of(TestImpl2.class, MyGeneric::new));
+			}
+		});
+		MyGeneric<TestInterface1> actual = odinJector.getInstance(new BindingKey<>(MyGeneric.class, TestImpl2.class));
+
+		actual.doThis();
+		verify(mock2).muh();
+		verifyNoInteractions(mock);
+	}
+
+	@Test
+	public void multipleInjectionsFromProvides() {
+		odinJector = OdinJector.create();
+		TestImpl1 mock = Mockito.mock(TestImpl1.class);
+		TestImpl2 mock2 = Mockito.mock(TestImpl2.class);
+		TestImpl3 mock3 = Mockito.mock(TestImpl3.class);
+		odinJector.addContext(new Context() {
+			@Override
+			public void configure(Binder binder) {
+			binder.bind(TestImpl1.class).to(() -> mock);
+			binder.bind(TestImpl2.class).to(() -> mock2);
+			binder.bind(TestImpl3.class).to(() -> mock3);
+			binder.bind(MultipleSameDependencies.class).to(Provides.of(TestImpl1.class, TestImpl2.class, TestImpl3.class, MultipleSameDependencies::new));
+			}
+		});
+		MultipleSameDependencies actual = odinJector.getInstance(MultipleSameDependencies.class);
+
+		actual.run();
+		verify(mock).muh();
+		verify(mock2).muh();
+		verify(mock3).muh();
+	}
+
 
 //	@Test
 	public void runAll() throws Throwable {

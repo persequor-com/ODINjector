@@ -5,4 +5,5 @@ public interface Binder {
 	void injectionListener(BindingListener listener);
 	void bindPackageToContext(Package aPackage);
 	void bindingResultListener(BindingResultListener listener);
+	<T> BindingTo<T> bind(BindingKey<T> bindingKey);
 }

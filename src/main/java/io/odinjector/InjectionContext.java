@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 public interface InjectionContext<T> extends InjectionModifier<T> {
     InjectionContextImpl.CurrentContext getCurrentKey();
-    Class<T> getClazz();
+    BindingKey<T> getBindingKey();
     List<Context> getContext();
     void addNext(Collection<? extends Context> dynamicContexts, boolean recursive);
     void addToNext(Collection<? extends Context> annotationContexts, boolean recursive);

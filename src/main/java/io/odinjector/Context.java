@@ -6,9 +6,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public abstract class Context {
-	Map<Class<?>, List<Binding<?>>> contextBindings = new ConcurrentHashMap<>();
-	Map<Class<?>, Provider<?>> providers = new ConcurrentHashMap<>();
-	Map<Class<?>, Object> singletons = new ConcurrentHashMap<>();
+	Map<BindingKey<?>, List<Binding<?>>> contextBindings = new ConcurrentHashMap<>();
+	Map<BindingKey<?>, Provider<?>> providers = new ConcurrentHashMap<>();
+	Map<BindingKey<?>, Object> singletons = new ConcurrentHashMap<>();
 	Map<Class<?>, BindingListener> bindingListeners = new ConcurrentHashMap<>();
 	Set<Package> packageBindings = Collections.synchronizedSet(new HashSet<>());
 	Map<Class<?>, BindingResultListener> bindingResultListeners = new ConcurrentHashMap<>();
@@ -23,11 +23,11 @@ public abstract class Context {
 	<T> List<BindingResult<T>> getBindings(InjectionContext<T> injectionContext) {
 		bindingListeners.values().forEach(bl -> bl.listen(injectionContext));
 		injectionContext.setResultListeners(bindingResultListeners);
-		if (!contextBindings.containsKey(injectionContext.getClazz()) && packageBindings.contains(injectionContext.getClazz().getPackage())) {
-			contextBindings.put(injectionContext.getClazz(), Collections.singletonList(ClassBinding.of(injectionContext.getClazz(), false)));
+		if (!contextBindings.containsKey(injectionContext.getBindingKey()) && packageBindings.contains(injectionContext.getBindingKey().getBoundClass().getPackage())) {
+			contextBindings.put(injectionContext.getBindingKey(), Collections.singletonList(ClassBinding.of(injectionContext.getBindingKey(), false)));
 		}
-		List res = (List) (contextBindings.containsKey(injectionContext.getClazz())
-			? contextBindings.get(injectionContext.getClazz()).stream().map(b -> BindingResult.of(b, this)).collect(Collectors.toList())
+		List res = (List) (contextBindings.containsKey(injectionContext.getBindingKey())
+			? contextBindings.get(injectionContext.getBindingKey()).stream().map(b -> BindingResult.of(b, this)).collect(Collectors.toList())
 			: Collections.emptyList()
 		);
 		return res;
@@ -42,8 +42,8 @@ public abstract class Context {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> T singleton(Class<T> clazz, Provider<T> provider) {
-		return (T)singletons.computeIfAbsent(clazz, c2 -> provider.get());
+	public <T> T singleton(BindingKey<T> bindingKey, Provider<T> provider) {
+		return (T)singletons.computeIfAbsent(bindingKey, c2 -> provider.get());
 	}
 
 	public Class<?> getMarkedContext() {

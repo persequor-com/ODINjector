@@ -168,14 +168,14 @@ public interface BindingTarget {
     }
 
     class UnBoundTarget implements BindingTarget {
-        private Class<?> target;
+        private BindingKey<?> target;
 
-        public UnBoundTarget(Class<?> target) {
+        public UnBoundTarget(BindingKey<?> target) {
             this.target = target;
         }
         @Override
         public Class<?> getTargetclass() {
-            return target;
+            return target.boundClass;
         }
 
         @Override
@@ -195,7 +195,7 @@ public interface BindingTarget {
 
         @Override
         public Annotation getAnnotation(Class<? extends Annotation> annotation) {
-            return target.getAnnotation(annotation);
+            return target.getBoundClass().getAnnotation(annotation);
         }
 
         @Override

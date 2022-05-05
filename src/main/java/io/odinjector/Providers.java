@@ -25,8 +25,8 @@ class Providers {
 			BindingResult<T> binding = getBoundClass(yggdrasill, injectionContext);
 
 			if (binding.isEmpty() || binding.isInterface()) {
-				if (injectionContext.getClazz().isInterface() && fallback != null) {
-					return () -> fallback.apply(injectionContext.getClazz());
+				if (injectionContext.getBindingKey().isInterface() && fallback != null) {
+					return () -> fallback.apply(injectionContext.getBindingKey().getBoundClass());
 				}
 				if (injectionContext.isOptional()) {
 					return () -> null;
@@ -41,7 +41,7 @@ class Providers {
 			Provider<T> provider = binding.binding.getProvider(yggdrasill, injectionContext, odin);
 
 			if (binding.binding.isSingleton()) {
-				return new WrappingProvider(injectionContext, new SingletonProvider(binding.context.singleton(injectionContext.getClazz(), provider)));
+				return new WrappingProvider(injectionContext, new SingletonProvider(binding.context.singleton(injectionContext.getBindingKey(), provider)));
 			} else {
 				return new WrappingProvider(injectionContext, provider);
 			}
@@ -77,9 +77,9 @@ class Providers {
 	}
 
 	private <T> void configureInjectionContextBeforeBinding(InjectionContext<T> injectionContext) {
-		Class<T> clazz = injectionContext.getClazz();
+		BindingKey<T> clazz = injectionContext.getBindingKey();
 
-		ContextConfiguration config = yggdrasill.getAnnotationConfiguration(clazz);
+		ContextConfiguration config = yggdrasill.getAnnotationConfiguration(clazz.getBoundClass());
 		if (config.contexts.size() > 0) {
 			List<Class<?>> contextClasses = config.contexts;
 

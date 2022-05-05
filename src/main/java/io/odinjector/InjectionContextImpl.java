@@ -9,13 +9,13 @@ public class InjectionContextImpl<T> implements InjectionContext<T> {
 	List<Context> context;
 	Deque<List<Context>> nextContexts;
 	List<Context> recursiveContext = new ArrayList<>();
-	Class<T> clazz;
+	BindingKey<T> clazz;
 	InjectionOptions options = InjectionOptions.get();
 	BindingTarget target;
 	private List<Function<T, T>> wrappers = new ArrayList<>();
 	private Map<Class<?>, BindingResultListener> bindingResultListeners = new ConcurrentHashMap<>();
 
-	static <C> InjectionContext<C> get(List<Context> context, Class<C> clazz, InjectionOptions options) {
+	static <C> InjectionContext<C> get(List<Context> context, BindingKey<C> clazz, InjectionOptions options) {
 		InjectionContextImpl<C> ic = new InjectionContextImpl<>();
 		ic.context = context;
 		ic.nextContexts = new ArrayDeque<>();
@@ -25,7 +25,7 @@ public class InjectionContextImpl<T> implements InjectionContext<T> {
 		return ic;
 	}
 
-	static <C> InjectionContext<C> get(List<Context> context, Class<C> clazz) {
+	static <C> InjectionContext<C> get(List<Context> context, BindingKey<C> clazz) {
 		InjectionContextImpl<C> ic = new InjectionContextImpl<>();
 		ic.context = context;
 		ic.nextContexts = new ArrayDeque<>();
@@ -36,11 +36,11 @@ public class InjectionContextImpl<T> implements InjectionContext<T> {
 	}
 
 	public CurrentContext<T> getCurrentKey() {
-		return new CurrentContext<>(context, clazz, target);
+		return new CurrentContext<T>(context, clazz, target);
 	}
 
 	@Override
-	public Class<T> getClazz() {
+	public BindingKey<T> getBindingKey() {
 		return clazz;
 	}
 
@@ -59,7 +59,7 @@ public class InjectionContextImpl<T> implements InjectionContext<T> {
 		InjectionContextImpl<C> ic = new InjectionContextImpl<>();
 		ic.context = nextContext;
 		ic.nextContexts = nextContexts;
-		ic.clazz = parameterType;
+		ic.clazz = BindingKey.get(parameterType);
 		ic.recursiveContext = this.recursiveContext;
 		ic.options = this.options.forNext();
 		ic.bindingResultListeners = bindingResultListeners;
@@ -145,12 +145,12 @@ public class InjectionContextImpl<T> implements InjectionContext<T> {
 
 	public static class CurrentContext<T> {
 		List<Context> context;
-		Class<T> clazz;
+		BindingKey<T> bindingKey;
 		BindingTarget bindingTarget;
 
-		public CurrentContext(List<Context> context, Class<T> clazz, BindingTarget bindingTarget) {
+		public CurrentContext(List<Context> context, BindingKey<T> bindingKey, BindingTarget bindingTarget) {
 			this.context = context;
-			this.clazz = clazz;
+			this.bindingKey = bindingKey;
 			this.bindingTarget = bindingTarget;
 		}
 
@@ -160,12 +160,12 @@ public class InjectionContextImpl<T> implements InjectionContext<T> {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			CurrentContext<?> that = (CurrentContext<?>) o;
-			return Objects.equals(context, that.context) && Objects.equals(clazz, that.clazz) && Objects.equals(bindingTarget, that.bindingTarget);
+			return Objects.equals(context, that.context) && Objects.equals(bindingKey, that.bindingKey) && Objects.equals(bindingTarget, that.bindingTarget);
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(context, clazz, bindingTarget);
+			return Objects.hash(context, bindingKey, bindingTarget);
 		}
 	}
 
@@ -179,13 +179,13 @@ public class InjectionContextImpl<T> implements InjectionContext<T> {
 		}
 
 		@Override
-		public Class<? extends T> getSourceClass() {
+		public BindingKey<? extends T> getSource() {
 			return injectionContext.clazz;
 		}
 
 		@Override
-		public Class getBoundClass() {
-			return res.getClass();
+		public BindingKey getBound() {
+			return BindingKey.get(res.getClass());
 		}
 
 		@Override
