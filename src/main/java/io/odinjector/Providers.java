@@ -21,37 +21,33 @@ class Providers {
 
 	@SuppressWarnings("unchecked")
 	public <T> Provider<T> get(InjectionContext<T> injectionContext) {
-		try {
-			Provider<T> providerMuh = (Provider<T>) providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> () -> {
-				configureInjectionContextBeforeBinding(injectionContext);
-				BindingResult<T> binding = getBoundClass(yggdrasill, injectionContext);
+		Provider<T> providerToReturn = (Provider<T>) providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> () -> {
+			configureInjectionContextBeforeBinding(injectionContext);
+			BindingResult<T> binding = getBoundClass(yggdrasill, injectionContext);
 
-				if (binding.isEmpty() || binding.isInterface()) {
-					if (injectionContext.getBindingKey().isInterface() && fallback != null) {
-						return () -> fallback.apply(injectionContext.getBindingKey().getBoundClass());
-					}
-					if (injectionContext.isOptional()) {
-						return () -> null;
-					} else {
-						throw new InjectionException("Unable to find binding for: " + injectionContext.logOutput());
-					}
+			if (binding.isEmpty() || binding.isInterface()) {
+				if (injectionContext.getBindingKey().isInterface() && fallback != null) {
+					return () -> fallback.apply(injectionContext.getBindingKey().getBoundClass());
 				}
-
-				configureInjectionContextOnBinding(injectionContext, binding);
-
-
-				Provider<T> provider = binding.binding.getProvider(yggdrasill, injectionContext, odin);
-
-				if (binding.binding.isSingleton()) {
-					return new WrappingProvider(injectionContext, new SingletonProvider(binding.context.singleton(injectionContext.getBindingKey(), provider)));
+				if (injectionContext.isOptional()) {
+					return () -> null;
 				} else {
-					return new WrappingProvider(injectionContext, provider);
+					throw new InjectionException("Unable to find binding for: " + injectionContext.logOutput());
 				}
-			});
-			return (Provider<T>) providerMuh.get();
-		} catch (Exception e) {
-			throw e;
-		}
+			}
+
+			configureInjectionContextOnBinding(injectionContext, binding);
+
+
+			Provider<T> provider = binding.binding.getProvider(yggdrasill, injectionContext, odin);
+
+			if (binding.binding.isSingleton()) {
+				return new WrappingProvider(injectionContext, new SingletonProvider(binding.context.singleton(injectionContext.getBindingKey(), provider)));
+			} else {
+				return new WrappingProvider(injectionContext, provider);
+			}
+		});
+		return (Provider<T>) providerToReturn.get();
 	}
 
 	@SuppressWarnings("unchecked")
