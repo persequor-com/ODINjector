@@ -408,8 +408,27 @@ public class OdinJectorTest {
 		verify(mock3).muh();
 	}
 
+	@Test
+	public void withRecursiveInstantiation() {
+		odinJector = OdinJector.create();
 
-//	@Test
+		RecursiveInstantiationSingletonParent actual = odinJector.getInstance(RecursiveInstantiationSingletonParent.class);
+
+		actual.getParent().getChild();
+		// This should not fail
+	}
+
+	@Test
+	public void withLoopingProviderInstantiation() {
+		odinJector = OdinJector.create();
+
+		LoopingProviderDependency1 actual = odinJector.getInstance(LoopingProviderDependency1.class);
+
+		actual.getDep().getDep().getDep().getDep();
+		// This should not fail
+	}
+
+	//	@Test
 	public void runAll() throws Throwable {
 		List<Method> methods = new ArrayList<>();
 		for (Method m : OdinJectorTest.class.getMethods()) {
@@ -446,6 +465,5 @@ public class OdinJectorTest {
 		});
 		System.out.println(System.currentTimeMillis()-s);
 		System.out.println(success+" vs "+fail);
-		System.out.println(OdinJector.i);
 	}
 }

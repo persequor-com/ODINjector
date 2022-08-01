@@ -80,10 +80,8 @@ public class OdinJector implements Injector {
 		return getInstances(InjectionContextImpl.get(new ArrayList<>(yggdrasill.getDynamicContexts(Collections.singletonList(context))), BindingKey.get(type), InjectionOptions.get().optional()));
 	}
 
-	public static int i = 0;
 	@SuppressWarnings("unchecked")
 	<T> T getInstance(InjectionContext<T> injectionContext) {
-		i ++;
 		return providers.get(injectionContext).get();
 	}
 

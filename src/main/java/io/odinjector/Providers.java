@@ -3,11 +3,12 @@ package io.odinjector;
 import javax.inject.Provider;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class Providers {
-	private final Map<InjectionContextImpl.CurrentContext, Provider> providers = new ConcurrentHashMap<>();
+	private final Map<InjectionContextImpl.CurrentContext, Provider<Provider>> providers = new ConcurrentHashMap<>();
 
 	private final Yggdrasill yggdrasill;
 	private OdinJector odin;
@@ -20,37 +21,42 @@ class Providers {
 
 	@SuppressWarnings("unchecked")
 	public <T> Provider<T> get(InjectionContext<T> injectionContext) {
-		return (Provider<T>) providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> {
-			configureInjectionContextBeforeBinding(injectionContext);
-			BindingResult<T> binding = getBoundClass(yggdrasill, injectionContext);
+		try {
+			Provider<T> providerMuh = (Provider<T>) providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> () -> {
+				configureInjectionContextBeforeBinding(injectionContext);
+				BindingResult<T> binding = getBoundClass(yggdrasill, injectionContext);
 
-			if (binding.isEmpty() || binding.isInterface()) {
-				if (injectionContext.getBindingKey().isInterface() && fallback != null) {
-					return () -> fallback.apply(injectionContext.getBindingKey().getBoundClass());
+				if (binding.isEmpty() || binding.isInterface()) {
+					if (injectionContext.getBindingKey().isInterface() && fallback != null) {
+						return () -> fallback.apply(injectionContext.getBindingKey().getBoundClass());
+					}
+					if (injectionContext.isOptional()) {
+						return () -> null;
+					} else {
+						throw new InjectionException("Unable to find binding for: " + injectionContext.logOutput());
+					}
 				}
-				if (injectionContext.isOptional()) {
-					return () -> null;
+
+				configureInjectionContextOnBinding(injectionContext, binding);
+
+
+				Provider<T> provider = binding.binding.getProvider(yggdrasill, injectionContext, odin);
+
+				if (binding.binding.isSingleton()) {
+					return new WrappingProvider(injectionContext, new SingletonProvider(binding.context.singleton(injectionContext.getBindingKey(), provider)));
 				} else {
-					throw new InjectionException("Unable to find binding for: "+injectionContext.logOutput());
+					return new WrappingProvider(injectionContext, provider);
 				}
-			}
-
-			configureInjectionContextOnBinding(injectionContext, binding);
-
-
-			Provider<T> provider = binding.binding.getProvider(yggdrasill, injectionContext, odin);
-
-			if (binding.binding.isSingleton()) {
-				return new WrappingProvider(injectionContext, new SingletonProvider(binding.context.singleton(injectionContext.getBindingKey(), provider)));
-			} else {
-				return new WrappingProvider(injectionContext, provider);
-			}
-		});
+			});
+			return (Provider<T>) providerMuh.get();
+		} catch (Exception e) {
+			throw e;
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T> Provider<List<T>> getAll(InjectionContext<T> injectionContext) {
-		return providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> {
+		return providers.computeIfAbsent(injectionContext.getCurrentKey(), c -> () -> {
 			configureInjectionContextBeforeBinding(injectionContext);
 
 			List<BindingResult<T>> bindings = getBoundClasses(yggdrasill, injectionContext);
@@ -60,7 +66,7 @@ class Providers {
 				configureInjectionContextOnBinding(newInjectionContext, binding);
 				return binding.binding.getProvider(yggdrasill, newInjectionContext, odin).get();
 			}).collect(Collectors.toList());
-		});
+		}).get();
 	}
 
 
