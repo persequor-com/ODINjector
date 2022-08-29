@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-class Yggdrasill extends Context {
+class Yggdrasill extends SingletonContext {
 	final Map<Class<?>, Context> contexts = Collections.synchronizedMap(new LinkedHashMap<>());
 	private final Map<Class<?>, Context> dynamicContexts = Collections.synchronizedMap(new LinkedHashMap<>());
 	private Map<Class<? extends Annotation>,BiConsumer<Object, ContextConfiguration>> annotations = Collections.synchronizedMap(new LinkedHashMap<>());

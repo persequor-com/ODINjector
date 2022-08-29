@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 public abstract class Context {
 	Map<BindingKey<?>, List<Binding<?>>> contextBindings = new ConcurrentHashMap<>();
 	Map<BindingKey<?>, Provider<?>> providers = new ConcurrentHashMap<>();
-	Map<BindingKey<?>, Object> singletons = new ConcurrentHashMap<>();
 	Map<Class<?>, BindingListener> bindingListeners = new ConcurrentHashMap<>();
 	Set<Package> packageBindings = Collections.synchronizedSet(new HashSet<>());
 	Map<Class<?>, BindingResultListener> bindingResultListeners = new ConcurrentHashMap<>();
@@ -39,11 +38,6 @@ public abstract class Context {
 			return BindingResult.empty();
 		}
 		return bindings.get(0);
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> T singleton(BindingKey<T> bindingKey, Provider<T> provider) {
-		return (T)singletons.computeIfAbsent(bindingKey, c2 -> provider.get());
 	}
 
 	public Class<?> getMarkedContext() {

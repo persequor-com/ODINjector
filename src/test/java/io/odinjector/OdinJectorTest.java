@@ -428,8 +428,49 @@ public class OdinJectorTest {
 		// This should not fail
 	}
 
-	//	@Test
+	@Test
+	public void singletonIsSetInContextOfInterfaceBindingToo_instantiateFromInterfaceFirst() {
+		odinJector = OdinJector.create().addContext(new SingletonCtx());
+
+		TestInterface1 fromInterface = odinJector.getInstance(TestInterface1.class);
+		TestInterface1 fromImplementationWithSingletonAnnotation = odinJector.getInstance(SingletonImpl.class);
+
+		assertSame(fromInterface, fromImplementationWithSingletonAnnotation);
+	}
+
+	@Test
+	public void singletonIsSetInContextOfInterfaceBindingToo_instantiateFromImplemeentationFirst() {
+		odinJector = OdinJector.create().addContext(new SingletonCtx());
+
+		TestInterface1 fromImplementationWithSingletonAnnotation = odinJector.getInstance(SingletonImpl.class);
+		TestInterface1 fromInterface = odinJector.getInstance(TestInterface1.class);
+
+		assertSame(fromInterface, fromImplementationWithSingletonAnnotation);
+	}
+
+	@Test
+	public void differentSingletonsInDifferentContexts() {
+		odinJector = OdinJector.create().addContext(new SingletonCtx()).addDynamicContext(new ASingletonContext());
+
+		TestInterface1 withASingletonScopedContext = odinJector.getInstance(ASingletonContext.class, TestInterface1.class);
+		TestInterface1 withoutAnyContext = odinJector.getInstance(TestInterface1.class);
+
+		assertNotSame(withASingletonScopedContext, withoutAnyContext);
+	}
+
+	@Test
+	public void nonSingletonScopedDynamicContext_doesNotDefineSingletonScope() {
+		odinJector = OdinJector.create().addContext(new SingletonCtx()).addDynamicContext(new SingletonCtx());
+
+		TestInterface1 withASingletonScopedContext = odinJector.getInstance(SingletonCtx.class, TestInterface1.class);
+		TestInterface1 withoutAnyContext = odinJector.getInstance(TestInterface1.class);
+
+		assertSame(withASingletonScopedContext, withoutAnyContext);
+	}
+
+		//@Test
 	public void runAll() throws Throwable {
+		odinJector = OdinJector.create().addContext(new SingletonCtx());
 		List<Method> methods = new ArrayList<>();
 		for (Method m : OdinJectorTest.class.getMethods()) {
 			if (m.getAnnotation(Test.class) != null && !m.getName().equals("runAll")) {
@@ -441,15 +482,15 @@ public class OdinJectorTest {
 		int fail = 0;
 
 		List<Thread> threads = new ArrayList<>();
-		for(int i=0;i<50;i++) {
+		for(int i=0;i<10;i++) {
 			Thread t = new Thread(() -> {
 				Object previous = null;
-				for(int x =0;x<1_000_000;x++) {
-					TestImpl1 actual1 = odinJector.getInstance(TestImpl1.class);
+				for(int x =0;x<100_000;x++) {
+					TestInterface1 actual1 = odinJector.getInstance(TestInterface1.class);
 					if (previous == null) {
 						previous = actual1;
 					} else {
-						assertNotSame(previous, actual1);
+						assertSame(previous, actual1);
 					}
 				}
 			});

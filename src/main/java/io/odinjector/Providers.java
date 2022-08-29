@@ -42,12 +42,17 @@ class Providers {
 			Provider<T> provider = binding.binding.getProvider(yggdrasill, injectionContext, odin);
 
 			if (binding.binding.isSingleton()) {
-				return new WrappingProvider(injectionContext, new SingletonProvider(binding.context.singleton(injectionContext.getBindingKey(), provider)));
+				T eagerlyInstantiated = provider.get();
+				return new WrappingProvider(injectionContext, new SingletonProvider(getSingletonContext(binding.context).singleton(eagerlyInstantiated.getClass(), () -> eagerlyInstantiated)));
 			} else {
 				return new WrappingProvider(injectionContext, provider);
 			}
 		});
 		return (Provider<T>) providerToReturn.get();
+	}
+
+	private SingletonContext getSingletonContext(Context context) {
+		return context instanceof SingletonContext ? (SingletonContext) context : yggdrasill;
 	}
 
 	@SuppressWarnings("unchecked")
